@@ -74,9 +74,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           <span className="mx-4 font-medium">{t('admin.sidebar.inventory')}</span>
         </Link>
 
-        <Link to="/admin/messages" className={`${baseLinkClasses} ${isActive('/admin/messages') ? activeLinkClasses : ''}`}>
-          <InboxIcon className="w-5 h-5" />
-          <span className="mx-4 font-medium">{t('admin.sidebar.messages')}</span>
+        {/* TODO: Add translation key for 'admin.sidebar.services' */}
+        <Link to="/admin/services" className={`${baseLinkClasses} ${isActive('/admin/services') ? activeLinkClasses : ''}`}>
+          <ScissorsIcon className="w-5 h-5" />
+           <span className="mx-4 font-medium">{t('admin.sidebar.services', 'Services')}</span>
+         </Link>
+
+         {/* TODO: Add translation key for 'admin.sidebar.staff' */}
+         <Link to="/admin/staff" className={`${baseLinkClasses} ${isActive('/admin/staff') ? activeLinkClasses : ''}`}>
+           <UserGroupIcon className="w-5 h-5" />
+           <span className="mx-4 font-medium">{t('admin.sidebar.staff', 'Staff')}</span>
+         </Link>
+
+         <Link to="/admin/messages" className={`${baseLinkClasses} ${isActive('/admin/messages') ? activeLinkClasses : ''}`}>
+           <InboxIcon className="w-5 h-5" />
+           <span className="mx-4 font-medium">{t('admin.sidebar.messages')}</span>
         </Link>
 
         <hr className="my-6 border-gray-200 dark:border-gray-600" />

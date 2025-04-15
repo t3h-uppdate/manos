@@ -10,18 +10,19 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminCalendar from './pages/admin/AdminCalendar';
 import AdminBookings from './pages/admin/AdminBookings';
 import AdminCustomers from './pages/admin/AdminCustomers';
-// import AdminStaff from './pages/admin/AdminStaff'; // Removed
-// import AdminServices from './pages/admin/AdminServices'; // Removed
-import AdminInventory from './pages/admin/AdminInventory'; // Import Inventory page
-import AdminMessages from './pages/admin/AdminMessages';
+ import AdminStaff from './pages/admin/AdminStaff'; // Import Staff page
+ import AdminServices from './pages/admin/AdminServices'; // Import Services page
+ import AdminInventory from './pages/admin/AdminInventory'; // Import Inventory page
+ import AdminMessages from './pages/admin/AdminMessages';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminLogin from './pages/Login'; // Renamed admin login import
 import CustomerLogin from './pages/CustomerLogin'; // Import customer login
-import CustomerRegister from './pages/CustomerRegister'; // Import customer register
-import ProtectedRoute from './components/ProtectedRoute'; // Added ProtectedRoute import
-import CustomerProtectedRoute from './components/CustomerProtectedRoute'; // Import customer protected route
-import { Toaster } from 'react-hot-toast'; // Import Toaster
-import './i18n/i18n';
+ import CustomerRegister from './pages/CustomerRegister'; // Import customer register
+ import ProtectedRoute from './components/ProtectedRoute'; // Added ProtectedRoute import
+ import CustomerProtectedRoute from './components/CustomerProtectedRoute'; // Import customer protected route
+ import MyBookings from './pages/MyBookings'; // Import MyBookings page
+ import { Toaster } from 'react-hot-toast'; // Import Toaster
+ import './i18n/i18n';
 
 // Component to render Navbar/Footer for non-admin routes
 const MainLayout: React.FC = () => (
@@ -56,12 +57,13 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/contact" element={<Contact />} />
-          {/* Protected Customer Route */}
-          <Route element={<CustomerProtectedRoute />}>
-            <Route path="/book" element={<BookingPortal />} />
-            {/* Add other customer-only routes here later (e.g., /my-bookings) */}
-          </Route>
-        </Route>
+           {/* Protected Customer Route */}
+           <Route element={<CustomerProtectedRoute />}>
+             <Route path="/book" element={<BookingPortal />} />
+             <Route path="/my-bookings" element={<MyBookings />} /> {/* Add My Bookings route */}
+             {/* Add other customer-only routes here later */}
+           </Route>
+         </Route>
 
         {/* Protected Admin Routes */}
         <Route element={<ProtectedRoute />}>
@@ -69,12 +71,12 @@ function App() {
             <Route index element={<AdminDashboard />} /> {/* Default admin page */}
             <Route path="calendar" element={<AdminCalendar />} />
           <Route path="bookings" element={<AdminBookings />} />
-          <Route path="customers" element={<AdminCustomers />} />
-          {/* <Route path="staff" element={<AdminStaff />} /> */} {/* Removed */}
-          {/* <Route path="services" element={<AdminServices />} /> */} {/* Removed */}
-          <Route path="inventory" element={<AdminInventory />} /> {/* Add Inventory route */}
-          <Route path="messages" element={<AdminMessages />} />
-            <Route path="settings" element={<AdminSettings />} />
+           <Route path="customers" element={<AdminCustomers />} />
+           <Route path="staff" element={<AdminStaff />} /> {/* Add Staff route */}
+           <Route path="services" element={<AdminServices />} /> {/* Add Services route */}
+           <Route path="inventory" element={<AdminInventory />} /> {/* Add Inventory route */}
+           <Route path="messages" element={<AdminMessages />} />
+             <Route path="settings" element={<AdminSettings />} />
             {/* Add other admin routes here */}
           </Route>
         </Route>

@@ -4,7 +4,8 @@ export const translations = {
       home: 'Home',
       about: 'About Us',
       contact: 'Contact Us',
-      findUs: 'Find Us'
+      findUs: 'Find Us',
+      my_bookings: 'My Bookings' // Added
     },
     home: {
       welcome: 'Welcome to Manos Barber Shop',
@@ -26,6 +27,20 @@ export const translations = {
     footer: {
       followUs: 'Follow Us'
     },
+    my_bookings: { // Added My Bookings section
+      title: 'My Bookings',
+      no_bookings: 'You have no upcoming or past bookings.',
+      unknown_service: 'Service Details Unavailable',
+      labels: {
+        time: 'Time',
+        staff: 'With',
+        status: 'Status'
+      },
+      errors: {
+        not_logged_in: 'User not identified. Please log in to view your bookings.',
+        load_failed: 'Failed to load your bookings.'
+      }
+    },
     common: { // Added common keys
       loading: 'Loading...',
       actions: 'Actions',
@@ -41,6 +56,9 @@ export const translations = {
       view: 'View',          // Added for messages
       saving: 'Saving...',   // Added for settings save button
       save_settings: 'Save Settings', // Added for settings save button
+      yes: 'Yes', // Added for boolean display
+      no: 'No',   // Added for boolean display
+      unknown: 'Unknown', // Added for boolean display
       days: { // Added for settings operating hours
         monday: 'Monday',
         tuesday: 'Tuesday',
@@ -153,6 +171,58 @@ export const translations = {
           load: 'Failed to load products.',
           delete: 'Failed to delete product "{{name}}".',
           invalid_id: 'Cannot delete product: Invalid ID.'
+        }
+      },
+      services: { // Added services section
+        title: 'Manage Services',
+        add_button: 'Add Service',
+        search_placeholder: 'Search services...',
+        no_services: 'No services found.',
+        no_search_results: 'No services match your search.',
+        edit_modal_title: 'Edit Service',
+        add_modal_title: 'Add Service',
+        delete_modal_title: 'Confirm Deletion',
+        confirm_delete: 'Are you sure you want to delete the service "{{name}}"? This action cannot be undone.',
+        table: {
+          name: 'Name',
+          category: 'Category',
+          duration: 'Duration (min)',
+          price: 'Price',
+          active: 'Active'
+        },
+        notifications: {
+          // Add/Update success handled in form component
+          delete_success: 'Service "{{name}}" deleted successfully!'
+        },
+        errors: {
+          load: 'Failed to load services.',
+          delete: 'Failed to delete service "{{name}}".',
+          invalid_id: 'Cannot delete service: Invalid ID.'
+        }
+      },
+      staff: { // Added staff section
+        title: 'Manage Staff',
+        add_button: 'Add Staff Member',
+        search_placeholder: 'Search staff...',
+        no_staff: 'No staff members found.',
+        no_search_results: 'No staff members match your search.',
+        edit_modal_title: 'Edit Staff Member',
+        add_modal_title: 'Add Staff Member',
+        delete_modal_title: 'Confirm Deletion',
+        confirm_delete: 'Are you sure you want to delete {{name}}? This action cannot be undone.',
+        table: {
+          name: 'Name',
+          phone: 'Phone',
+          active: 'Active'
+        },
+        notifications: {
+          // Add/Update success handled in form component
+          delete_success: 'Staff member "{{name}}" deleted successfully!'
+        },
+        errors: {
+          load: 'Failed to load staff members.',
+          delete: 'Failed to delete staff member "{{name}}". They might be assigned to bookings.',
+          invalid_id: 'Cannot delete staff member: Invalid ID.'
         }
       },
       messages: { // Added messages section
@@ -285,6 +355,50 @@ export const translations = {
             add: 'Failed to add product.',
             update: 'Failed to update product.'
           }
+        },
+        service: { // Added service form section
+          labels: {
+            name: 'Service Name',
+            description: 'Description',
+            duration: 'Duration (minutes)',
+            price: 'Price',
+            category: 'Category',
+            active: 'Service is Active'
+          },
+          buttons: {
+            add: 'Add Service',
+            update: 'Update Service'
+          },
+          notifications: {
+            add_success: 'Service "{{name}}" added successfully!',
+            update_success: 'Service "{{name}}" updated successfully!'
+          },
+          errors: {
+            required_fields: 'Please fill in all required fields (Name, Duration > 0, Price >= 0) with valid values.',
+            add: 'Failed to add service.',
+            update: 'Failed to update service.'
+          }
+        },
+        staff: { // Added staff form section
+          labels: {
+            name: 'Name',
+            phone: 'Phone',
+            bio: 'Bio',
+            active: 'Staff member is Active'
+          },
+          buttons: {
+            add: 'Add Staff',
+            update: 'Update Staff'
+          },
+          notifications: {
+            add_success: 'Staff member "{{name}}" added successfully!',
+            update_success: 'Staff member "{{name}}" updated successfully!'
+          },
+          errors: {
+            name_required: 'Staff name is required.',
+            add: 'Failed to add staff member.',
+            update: 'Failed to update staff member.'
+          }
         }
       },
       sidebar: { // Added sidebar section
@@ -294,6 +408,8 @@ export const translations = {
         bookings: 'Bookings',
         customers: 'Customers',
         inventory: 'Inventory',
+        services: 'Services',
+        staff: 'Staff', // Added staff key
         messages: 'Messages',
         settings: 'Settings'
       }
@@ -305,7 +421,8 @@ export const translations = {
       home: 'الرئيسية',
       about: 'من نحن',
       contact: 'اتصل بنا',
-      findUs: 'موقعنا'
+      findUs: 'موقعنا',
+      my_bookings: 'حجوزاتي' // Added
     },
     home: {
       welcome: 'مرحباً بكم في صالون مانوس',
@@ -327,6 +444,20 @@ export const translations = {
     footer: {
       followUs: 'تابعنا'
     },
+    my_bookings: { // Added My Bookings section
+      title: 'حجوزاتي',
+      no_bookings: 'ليس لديك حجوزات قادمة أو سابقة.',
+      unknown_service: 'تفاصيل الخدمة غير متوفرة',
+      labels: {
+        time: 'الوقت',
+        staff: 'مع',
+        status: 'الحالة'
+      },
+      errors: {
+        not_logged_in: 'لم يتم التعرف على المستخدم. يرجى تسجيل الدخول لعرض حجوزاتك.',
+        load_failed: 'فشل تحميل حجوزاتك.'
+      }
+    },
     common: { // Added common keys
       loading: 'جار التحميل...',
       actions: 'الإجراءات',
@@ -342,6 +473,9 @@ export const translations = {
       view: 'عرض',          // Added for messages
       saving: 'جار الحفظ...',   // Added for settings save button
       save_settings: 'حفظ الإعدادات', // Added for settings save button
+      yes: 'نعم', // Added for boolean display
+      no: 'لا',   // Added for boolean display
+      unknown: 'غير معروف', // Added for boolean display
       days: { // Added for settings operating hours
         monday: 'الاثنين',
         tuesday: 'الثلاثاء',
@@ -454,6 +588,58 @@ export const translations = {
           load: 'فشل في تحميل المنتجات.',
           delete: 'فشل في حذف المنتج "{{name}}".',
           invalid_id: 'لا يمكن حذف المنتج: معرف غير صالح.'
+        }
+      },
+      services: { // Added services section
+        title: 'إدارة الخدمات',
+        add_button: 'إضافة خدمة',
+        search_placeholder: 'البحث في الخدمات...',
+        no_services: 'لم يتم العثور على خدمات.',
+        no_search_results: 'لا توجد خدمات تطابق بحثك.',
+        edit_modal_title: 'تعديل الخدمة',
+        add_modal_title: 'إضافة خدمة',
+        delete_modal_title: 'تأكيد الحذف',
+        confirm_delete: 'هل أنت متأكد أنك تريد حذف الخدمة "{{name}}؟ لا يمكن التراجع عن هذا الإجراء.',
+        table: {
+          name: 'الاسم',
+          category: 'الفئة',
+          duration: 'المدة (دقيقة)',
+          price: 'السعر',
+          active: 'نشط'
+        },
+        notifications: {
+          // Add/Update success handled in form component
+          delete_success: 'تم حذف الخدمة "{{name}}" بنجاح!'
+        },
+        errors: {
+          load: 'فشل في تحميل الخدمات.',
+          delete: 'فشل في حذف الخدمة "{{name}}".',
+          invalid_id: 'لا يمكن حذف الخدمة: معرف غير صالح.'
+        }
+      },
+      staff: { // Added staff section
+        title: 'إدارة الموظفين',
+        add_button: 'إضافة موظف',
+        search_placeholder: 'البحث في الموظفين...',
+        no_staff: 'لم يتم العثور على موظفين.',
+        no_search_results: 'لا يوجد موظفون يطابقون بحثك.',
+        edit_modal_title: 'تعديل الموظف',
+        add_modal_title: 'إضافة موظف',
+        delete_modal_title: 'تأكيد الحذف',
+        confirm_delete: 'هل أنت متأكد أنك تريد حذف {{name}}؟ لا يمكن التراجع عن هذا الإجراء.',
+        table: {
+          name: 'الاسم',
+          phone: 'الهاتف',
+          active: 'نشط'
+        },
+        notifications: {
+          // Add/Update success handled in form component
+          delete_success: 'تم حذف الموظف "{{name}}" بنجاح!'
+        },
+        errors: {
+          load: 'فشل في تحميل الموظفين.',
+          delete: 'فشل في حذف الموظف "{{name}}". قد يكونون معينين لحجوزات.',
+          invalid_id: 'لا يمكن حذف الموظف: معرف غير صالح.'
         }
       },
       messages: { // Added messages section
@@ -586,6 +772,50 @@ export const translations = {
             add: 'فشل في إضافة المنتج.',
             update: 'فشل في تحديث المنتج.'
           }
+        },
+        service: { // Added service form section
+          labels: {
+            name: 'اسم الخدمة',
+            description: 'الوصف',
+            duration: 'المدة (دقيقة)',
+            price: 'السعر',
+            category: 'الفئة',
+            active: 'الخدمة نشطة'
+          },
+          buttons: {
+            add: 'إضافة خدمة',
+            update: 'تحديث الخدمة'
+          },
+          notifications: {
+            add_success: 'تمت إضافة الخدمة "{{name}}" بنجاح!',
+            update_success: 'تم تحديث الخدمة "{{name}}" بنجاح!'
+          },
+          errors: {
+            required_fields: 'يرجى ملء جميع الحقول المطلوبة (الاسم، المدة > 0، السعر >= 0) بقيم صالحة.',
+            add: 'فشل في إضافة الخدمة.',
+            update: 'فشل في تحديث الخدمة.'
+          }
+        },
+        staff: { // Added staff form section
+          labels: {
+            name: 'الاسم',
+            phone: 'الهاتف',
+            bio: 'نبذة',
+            active: 'الموظف نشط'
+          },
+          buttons: {
+            add: 'إضافة موظف',
+            update: 'تحديث الموظف'
+          },
+          notifications: {
+            add_success: 'تمت إضافة الموظف "{{name}}" بنجاح!',
+            update_success: 'تم تحديث الموظف "{{name}}" بنجاح!'
+          },
+          errors: {
+            name_required: 'اسم الموظف مطلوب.',
+            add: 'فشل في إضافة الموظف.',
+            update: 'فشل في تحديث الموظف.'
+          }
         }
       },
       sidebar: { // Added sidebar section
@@ -595,6 +825,8 @@ export const translations = {
         bookings: 'الحجوزات',
         customers: 'العملاء',
         inventory: 'المخزون',
+        services: 'الخدمات',
+        staff: 'الموظفون', // Added staff key
         messages: 'الرسائل',
         settings: 'الإعدادات'
       }

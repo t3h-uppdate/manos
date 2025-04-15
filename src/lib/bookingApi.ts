@@ -64,7 +64,33 @@ export const createBooking = async (bookingData: NewBookingData): Promise<Bookin
   return data;
 };
 
-// TODO: Add function to fetch availability (fetchStaffAvailability)
-// This will be more complex, involving staff schedules, existing bookings, service duration etc.
-// Example signature:
-// export const fetchStaffAvailability = async (serviceId: number, dateRangeStart: Date, dateRangeEnd: Date): Promise<AvailableSlot[]> => { ... }
+ // TODO: Add function to fetch availability (fetchStaffAvailability)
+ // This will be more complex, involving staff schedules, existing bookings, service duration etc.
+ // Example signature:
+ // export const fetchStaffAvailability = async (serviceId: number, dateRangeStart: Date, dateRangeEnd: Date): Promise<AvailableSlot[]> => { ... }
+
+ // Define a more detailed Booking type for fetching, including related data
+ export interface DetailedBooking extends Booking {
+    services?: { name: string } | null; // Join service name
+    staff?: { name: string } | null; // Join staff name
+ }
+
+ // Function to fetch bookings for a specific customer ID
+ export const fetchBookingsByCustomerId = async (customerId: number): Promise<DetailedBooking[]> => {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select(`
+        *,
+        services ( name ),
+        staff ( name )
+      `)
+      .eq('customer_id', customerId)
+      .order('start_time', { ascending: false }); // Order by most recent first
+
+    if (error) {
+      console.error('Error fetching customer bookings:', error);
+      throw new Error('Failed to fetch your bookings.');
+    }
+
+    return data || [];
+ };
