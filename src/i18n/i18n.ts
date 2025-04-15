@@ -9,7 +9,7 @@ i18n
       en: { translation: translations.en },
       ar: { translation: translations.ar }
     },
-    lng: 'en',
+    lng: localStorage.getItem('i18nextLng') || 'en', // Read language from localStorage or default to 'en'
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false

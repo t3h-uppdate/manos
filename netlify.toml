@@ -1,0 +1,16 @@
+# Netlify configuration file
+
+[build]
+  # Command to build the site
+  command = "vite build"
+  # Directory containing the built site assets, relative to the base directory
+  publish = "dist"
+  # Base directory of the site, relative to the repository root
+  base = "/"
+
+# Redirect rule for single-page applications (SPAs)
+# This ensures that all paths are served index.html, allowing client-side routing to handle them.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
