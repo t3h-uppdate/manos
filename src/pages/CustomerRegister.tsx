@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom'; // Removed useNavigate
 import { supabase } from '../lib/supabaseClient';
 // We might need findOrCreateCustomer if we want to prevent duplicate customer entries
 // even if auth signup fails later, but let's keep it simple for now.
 // We'll create the customer record *after* successful auth signup.
 
 const CustomerRegister: React.FC = () => {
-  const navigate = useNavigate();
+  // Removed navigate initialization
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -66,9 +66,18 @@ const CustomerRegister: React.FC = () => {
       // Don't navigate immediately, user needs to confirm email usually
       // navigate('/login');
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Registration error:', err);
-      setError(err.error_description || err.message || 'Failed to register.');
+      // Type guard for error message
+      let errorMessage = 'Failed to register.';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'object' && err !== null && 'error_description' in err && typeof err.error_description === 'string') {
+        errorMessage = err.error_description; // Supabase specific error field
+      } else if (typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string') {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -6,7 +6,7 @@ import 'react-datepicker/dist/react-datepicker.css'; // Import default styles
 import { fetchStaffAvailability, AvailableSlot } from '../lib/availabilityApi'; // Import availability API and type
 import { createBooking, NewBookingData } from '../lib/bookingApi'; // Import booking API and type
 import { findOrCreateCustomer } from '../lib/customerApi'; // Import customer API
-import { useAuth } from '../context/AuthContext'; // Import useAuth
+import { useAuth } from '../hooks/useAuth'; // Updated import path for useAuth
 // Removed serviceApi import
 // TODO: Import necessary types (Service, Staff, Booking etc.)
 // TODO: Import components for displaying services, calendar/time slots, forms

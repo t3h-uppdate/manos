@@ -55,9 +55,15 @@ const AdminBookings: React.FC = () => {
       if (fetchError) throw fetchError;
 
       setBookings(data as Booking[] || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error fetching bookings:", err);
-      const errorMessage = err.message || t('admin.bookings.errors.fetch');
+      // Type guard for error message
+      let errorMessage = t('admin.bookings.errors.fetch');
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string') {
+        errorMessage = err.message;
+      }
       toast.error(errorMessage);
       setError(errorMessage); // Keep for conditional rendering
     }
@@ -115,9 +121,15 @@ const AdminBookings: React.FC = () => {
         currentBookings.filter((b: Booking) => b.id !== bookingId)
       );
       toast.success(t('admin.bookings.notifications.delete_success'));
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error deleting booking:", err);
-      const errorMessage = err.message || t('admin.bookings.errors.delete');
+      // Type guard for error message
+      let errorMessage = t('admin.bookings.errors.delete');
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string') {
+        errorMessage = err.message;
+      }
       toast.error(errorMessage);
       setError(errorMessage); // Keep for conditional rendering
     }

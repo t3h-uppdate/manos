@@ -65,10 +65,10 @@ export const addService = async (serviceData: ServiceData): Promise<Service> => 
 
 // Update an existing service
 export const updateService = async (id: number, serviceData: Partial<ServiceData>): Promise<Service> => {
-   // Ensure numeric fields are numbers if they are present in the partial update
-   const dataToUpdate: { [key: string]: any } = { ...serviceData };
+   // Create a type-safe object for the update payload
+   const dataToUpdate: Partial<ServiceData> = { ...serviceData };
    if (serviceData.price !== undefined) {
-       dataToUpdate.price = Number(serviceData.price);
+       dataToUpdate.price = Number(serviceData.price); // Ensure price is a number
    }
    if (serviceData.duration_minutes !== undefined) {
        dataToUpdate.duration_minutes = Number(serviceData.duration_minutes);

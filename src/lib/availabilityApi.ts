@@ -49,9 +49,23 @@ export const fetchStaffAvailability = async (
 
   // The RPC function returns rows with slot_start_time respecting operating hours
   // Map this directly to our AvailableSlot interface
-  const availableSlots: AvailableSlot[] = (data || []).map((slot: any) => ({
-      datetime: slot.slot_start_time, // Map the returned column name
-  }));
+  const availableSlots: AvailableSlot[] = (data || [])
+    .map((slot: unknown) => {
+      // Type guard to ensure slot is an object with the expected property
+      if (
+        typeof slot === 'object' &&
+        slot !== null &&
+        'slot_start_time' in slot &&
+        typeof slot.slot_start_time === 'string'
+      ) {
+        return {
+          datetime: slot.slot_start_time, // Map the returned column name
+        };
+      }
+      console.warn('Received unexpected slot format from RPC:', slot);
+      return null; // Return null for invalid slots
+    })
+    .filter((slot: AvailableSlot | null): slot is AvailableSlot => slot !== null); // Filter out nulls, explicitly typing the parameter
 
   console.log(`Returning ${availableSlots.length} slots for ${formattedDate} from RPC.`);
 

@@ -1,17 +1,18 @@
-import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, ReactNode } from 'react'; // Removed useContext
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient'; // Adjust path if needed
 
-interface AuthContextType {
+// Export the type
+export interface AuthContextType {
   session: Session | null;
   user: User | null;
   loading: boolean;
   signOut: () => Promise<void>;
 }
 
-// Create the context with a default value (can be undefined or null initially)
+// Create and export the context with a default value
 // Using 'null!' assertion to satisfy initial type check, will be populated by provider
-const AuthContext = createContext<AuthContextType>(null!);
+export const AuthContext = createContext<AuthContextType>(null!);
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -71,11 +72,4 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-// Custom hook to use the AuthContext
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+// useAuth hook moved to src/hooks/useAuth.ts

@@ -90,9 +90,15 @@ const AddEditCustomerForm: React.FC<AddEditCustomerFormProps> = ({
         onClose(); // Close the modal
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error saving customer:", err);
-      const saveError = err.message || t(isEditing ? 'admin.forms.customer.errors.update' : 'admin.forms.customer.errors.add');
+      // Type guard for error message
+      let saveError = t(isEditing ? 'admin.forms.customer.errors.update' : 'admin.forms.customer.errors.add');
+      if (err instanceof Error) {
+        saveError = err.message;
+      } else if (typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string') {
+        saveError = err.message;
+      }
       setError(saveError);
       toast.error(saveError); // Show toast on save error
     } finally {

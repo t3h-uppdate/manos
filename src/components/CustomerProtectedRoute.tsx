@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // Adjust path if needed
+import { useAuth } from '../hooks/useAuth'; // Corrected import path
 
 const CustomerProtectedRoute: React.FC = () => {
   const { user, loading } = useAuth();

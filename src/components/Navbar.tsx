@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
 import { useTranslation } from 'react-i18next';
 import { Menu, Globe, LogOut } from 'lucide-react'; // Import LogOut icon
-import { useAuth } from '../context/AuthContext'; // Import useAuth hook
+import { useAuth } from '../hooks/useAuth'; // Corrected import path
 
 export const Navbar = () => {
   const { t, i18n } = useTranslation();

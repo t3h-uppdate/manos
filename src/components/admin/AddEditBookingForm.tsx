@@ -24,13 +24,6 @@ interface AddEditBookingFormProps {
   onClose: () => void;
 }
 
-// Helper to parse duration string "HH:MM:SS" to minutes - No translatable text here
-const durationToMinutes = (interval: string | null): number => {
-  if (!interval) return 0;
-  const parts = interval.split(':');
-  return (parseInt(parts[0], 10) * 60) + (parseInt(parts[1], 10));
-};
-
 const AddEditBookingForm: React.FC<AddEditBookingFormProps> = ({
   bookingToEdit,
   onFormSubmit,
@@ -71,7 +64,7 @@ const AddEditBookingForm: React.FC<AddEditBookingFormProps> = ({
 
       setCustomers(customerData || []);
       // Removed setting services and staff
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error fetching customer data:", err);
       const errorMessage = t('admin.forms.booking.errors.load_customers');
       setDataLoadingError(errorMessage);
@@ -197,9 +190,16 @@ const AddEditBookingForm: React.FC<AddEditBookingFormProps> = ({
       onFormSubmit();
       onClose();
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error saving booking:", err);
-      const saveError = err.message || t(isEditing ? 'admin.forms.booking.errors.update' : 'admin.forms.booking.errors.add');
+      // Type guard for error message
+      let saveError = t(isEditing ? 'admin.forms.booking.errors.update' : 'admin.forms.booking.errors.add');
+      if (err instanceof Error) {
+        saveError = err.message;
+      } else if (typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string') {
+        // Handle Supabase specific error structure if needed, e.g. err.message
+        saveError = err.message;
+      }
       setFormError(saveError);
       toast.error(saveError); // Show toast on save error
     } finally {

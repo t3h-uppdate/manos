@@ -28,9 +28,18 @@ const CustomerLogin: React.FC = () => {
       // TODO: Redirect to intended page if user was redirected here
       navigate('/book'); // Redirect to booking portal for now
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err);
-      setError(err.error_description || err.message || 'Failed to log in. Please check your credentials.');
+      // Type guard for error message
+      let errorMessage = 'Failed to log in. Please check your credentials.';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'object' && err !== null && 'error_description' in err && typeof err.error_description === 'string') {
+        errorMessage = err.error_description; // Supabase specific error field
+      } else if (typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string') {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

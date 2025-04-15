@@ -23,15 +23,7 @@ interface OperatingHours {
   sunday: DayHours;
 }
 
-// Define the Booking type again for clarity, including related data
-interface Booking {
-  id: string;
-  start_time: string;
-  end_time: string;
-  customers: { name: string } | null;
-  services: { name: string } | null;
-  staff: { name: string } | null;
-}
+// Removed unused Booking interface definition
 
 const AdminCalendar: React.FC = () => {
   const { t } = useTranslation(); // Initialize useTranslation
@@ -42,37 +34,49 @@ const AdminCalendar: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Map day names to FullCalendar's day numbers (0=Sun, 1=Mon, ...)
-  const dayMap: { [key in keyof OperatingHours]: number } = {
-    sunday: 0,
-    monday: 1,
-    tuesday: 2,
-    wednesday: 3,
-    thursday: 4,
-    friday: 5,
-    saturday: 6,
-  };
-
-  // Helper to format OperatingHours into FullCalendar's BusinessHoursInput
-  const formatBusinessHours = (hours: OperatingHours): BusinessHoursInput => {
-    const formatted: BusinessHoursInput = [];
-    for (const dayName in hours) {
-      const dayKey = dayName as keyof OperatingHours;
-      if (hours[dayKey].open) {
-        formatted.push({
-          daysOfWeek: [dayMap[dayKey]],
-          startTime: hours[dayKey].start,
-          endTime: hours[dayKey].end,
-        });
-      }
-    }
-    // FullCalendar can often merge contiguous blocks automatically,
-    // but this format (one entry per open day) is clear and reliable.
-    return formatted;
-  };
-
+  // dayMap moved inside useEffect
 
   useEffect(() => {
+    // Map day names to FullCalendar's day numbers (moved inside)
+    const dayMap: { [key in keyof OperatingHours]: number } = {
+      sunday: 0,
+      monday: 1,
+      tuesday: 2,
+      wednesday: 3,
+      thursday: 4,
+      friday: 5,
+      saturday: 6,
+    };
+
+    // Define interface for the fetched booking data shape
+    interface FetchedBookingData {
+      id: string;
+      start_time: string;
+      end_time: string;
+      // Adjust interface to expect arrays for joined data, or null
+      customers: { name: string }[] | null;
+      services: { name: string }[] | null;
+      staff: { name: string }[] | null;
+    }
+
+    // Helper to format OperatingHours into FullCalendar's BusinessHoursInput (moved inside)
+    const formatBusinessHours = (hours: OperatingHours): BusinessHoursInput => {
+      const formatted: BusinessHoursInput = [];
+      for (const dayName in hours) {
+        const dayKey = dayName as keyof OperatingHours;
+        if (hours[dayKey].open) {
+          formatted.push({
+            daysOfWeek: [dayMap[dayKey]],
+            startTime: hours[dayKey].start,
+            endTime: hours[dayKey].end,
+          });
+        }
+      }
+      // FullCalendar can often merge contiguous blocks automatically,
+      // but this format (one entry per open day) is clear and reliable.
+      return formatted;
+    };
+
     const fetchData = async () => {
       setLoading(true);
       setError(null); // Reset error at the start of fetch
@@ -98,10 +102,11 @@ const AdminCalendar: React.FC = () => {
 
         // Process Bookings
         if (bookingsResponse.error) throw bookingsResponse.error;
-        const formattedEvents: EventInput[] = (bookingsResponse.data || []).map((booking: any) => {
-          const customerName = booking.customers?.name;
-          const serviceName = booking.services?.name;
-          const staffName = booking.staff?.name;
+        const formattedEvents: EventInput[] = (bookingsResponse.data || []).map((booking: FetchedBookingData) => { // Apply updated interface here
+          // Access the first element of the array if it exists
+          const customerName = booking.customers?.[0]?.name;
+          const serviceName = booking.services?.[0]?.name;
+          const staffName = booking.staff?.[0]?.name;
           const titleService = serviceName || t('admin.calendar.event.default_service');
           const titleCustomer = customerName || t('admin.calendar.event.default_customer');
           const titleStaff = staffName || t('admin.calendar.event.default_staff');
@@ -174,9 +179,16 @@ const AdminCalendar: React.FC = () => {
           setSlotMaxTime('20:00');
         }
 
-      } catch (err: any) {
+      } catch (err: unknown) { // Use unknown for catch block
         console.error("Error fetching calendar data:", err);
-        setError(err.message || t('admin.calendar.errors.fetch'));
+        // Type guard for error message
+        let errorMessage = t('admin.calendar.errors.fetch');
+        if (err instanceof Error) {
+          errorMessage = err.message;
+        } else if (typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string') {
+          errorMessage = err.message;
+        }
+        setError(errorMessage);
         setEvents([]); // Clear events on error
         setBusinessHours(null); // Clear business hours on error
       } finally {
@@ -185,7 +197,7 @@ const AdminCalendar: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [t]); // Removed dayMap from dependency array
 
   return (
     <div>

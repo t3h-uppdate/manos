@@ -1,72 +1,54 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next'; // Import useTranslation
-import { supabase } from '../../lib/supabaseClient'; // Adjust path as needed
-
-interface SummaryCounts {
-  bookingsToday: number | null;
-  totalCustomers: number | null;
-  newMessages: number | null;
-}
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom'; // Import Link for navigation
+import { fetchDashboardSummaryCounts, DashboardSummaryCounts } from '../../lib/dashboardApi'; // Import new API function and type
 
 const AdminDashboard: React.FC = () => {
-  const { t } = useTranslation(); // Initialize useTranslation
-  const [counts, setCounts] = useState<SummaryCounts>({
+  const { t } = useTranslation();
+  const [counts, setCounts] = useState<DashboardSummaryCounts>({ // Use new interface
     bookingsToday: null,
-    totalCustomers: null,
+    totalCustomers: null, // Still in interface, but won't be displayed
     newMessages: null,
+    upcomingAppointments24h: null, // Added new metric
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchCounts = async () => {
+    const loadDashboardData = async () => {
       setLoading(true);
       setError(null);
       try {
-        // Get today's date range
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        const todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999);
-
-        // Fetch counts concurrently
-        const [
-          { count: bookingsTodayCount, error: bookingsError },
-          { count: totalCustomersCount, error: customersError },
-          { count: newMessagesCount, error: messagesError },
-        ] = await Promise.all([
-          supabase
-            .from('bookings')
-            .select('*', { count: 'exact', head: true })
-            .gte('start_time', todayStart.toISOString())
-            .lte('start_time', todayEnd.toISOString()),
-          supabase
-            .from('customers')
-            .select('*', { count: 'exact', head: true }),
-          supabase
-            .from('messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('status', 'unread'),
-        ]);
-
-        if (bookingsError) throw bookingsError;
-        if (customersError) throw customersError;
-        if (messagesError) throw messagesError;
-
+        const summaryCounts = await fetchDashboardSummaryCounts();
+        setCounts(summaryCounts);
+        // Check if any count is null, indicating an error during fetch in dashboardApi
+        if (Object.values(summaryCounts).some(count => count === null)) {
+             // Error is already logged in dashboardApi, set a generic error message
+             setError(t('admin.dashboard.errors.fetch'));
+        }
+      } catch (err: unknown) { // Catch errors re-thrown from dashboardApi (if any)
+        console.error("Error loading dashboard data:", err);
+        // Type guard for error message
+        let errorMessage = t('admin.dashboard.errors.fetch');
+        if (err instanceof Error) {
+          errorMessage = err.message;
+        } else if (typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string') {
+          errorMessage = err.message;
+        }
+        setError(errorMessage);
+        // Ensure counts are reset or set to null on error
         setCounts({
-          bookingsToday: bookingsTodayCount,
-          totalCustomers: totalCustomersCount,
-          newMessages: newMessagesCount,
+            bookingsToday: null,
+            totalCustomers: null,
+            newMessages: null,
+            upcomingAppointments24h: null,
         });
-      } catch (err: any) {
-        console.error("Error fetching dashboard counts:", err);
-        setError(err.message || t('admin.dashboard.errors.fetch'));
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCounts();
+    loadDashboardData(); // Corrected function call
   }, [t]); // Add t to dependency array
 
   const renderCount = (count: number | null) => {
@@ -79,29 +61,33 @@ const AdminDashboard: React.FC = () => {
     <div>
       <h1 className="text-2xl font-semibold text-gray-800 mb-6">{t('admin.dashboard.title')}</h1>
       {error && <p className="text-red-600 bg-red-100 p-3 rounded mb-4">{error}</p>} {/* Error message is already translated */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Summary Cards */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6"> {/* Adjusted grid columns */}
+        {/* Bookings Today Card (Clickable) */}
+        <Link to="/admin/bookings" className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 block">
           <h2 className="text-lg font-medium text-gray-600">{t('admin.dashboard.card.bookings_today')}</h2>
           <p className="text-3xl font-bold text-gray-800 mt-2">
             {renderCount(counts.bookingsToday)}
           </p>
-        </div>
+        </Link>
+
+        {/* Upcoming Appointments Card */}
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-lg font-medium text-gray-600">{t('admin.dashboard.card.total_customers')}</h2>
-          <p className="text-3xl font-bold text-gray-800 mt-2">
-             {renderCount(counts.totalCustomers)}
-          </p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
+           <h2 className="text-lg font-medium text-gray-600">{t('admin.dashboard.card.upcoming_appointments_24h', 'Upcoming (24h)')}</h2> {/* Added translation key */}
+           <p className="text-3xl font-bold text-gray-800 mt-2">
+             {renderCount(counts.upcomingAppointments24h)}
+           </p>
+         </div>
+
+        {/* New Messages Card (Clickable) */}
+        <Link to="/admin/messages" className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 block">
           <h2 className="text-lg font-medium text-gray-600">{t('admin.dashboard.card.new_messages')}</h2>
           <p className="text-3xl font-bold text-gray-800 mt-2">
             {renderCount(counts.newMessages)}
           </p>
-        </div>
-      </div>
+        </Link>
+      </div> {/* Closing grid div */}
       {/* Add more dashboard widgets here later */}
-    </div>
+    </div> // Closing main container div
   );
 };
 

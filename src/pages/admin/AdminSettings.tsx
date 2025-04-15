@@ -63,10 +63,10 @@ const AdminSettings: React.FC = () => {
 
       // Transform the key-value pairs into a Settings object
       const loadedSettings: Partial<Settings> = {};
-      (data || []).forEach(item => {
+        (data || []).forEach(item => {
         if (item.key && item.value !== null) {
-          // Type assertion needed if Settings keys are strictly defined
-          (loadedSettings as any)[item.key] = item.value;
+          // Explicitly cast value to string to match Settings interface
+          loadedSettings[item.key as keyof Settings] = String(item.value);
         }
       });
       setSettings(loadedSettings);
@@ -89,9 +89,15 @@ const AdminSettings: React.FC = () => {
         setOperatingHours(defaultOperatingHours); // Fallback to default on parse error
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error fetching settings:", err);
-      const fetchErrorMessage = err.message || t('admin.settings.errors.load');
+      // Type guard for error message
+      let fetchErrorMessage = t('admin.settings.errors.load');
+      if (err instanceof Error) {
+        fetchErrorMessage = err.message;
+      } else if (typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string') {
+        fetchErrorMessage = err.message;
+      }
       setError(fetchErrorMessage);
       toast.error(fetchErrorMessage); // Show toast as well
     } finally {
@@ -171,9 +177,15 @@ const AdminSettings: React.FC = () => {
       // Optionally re-fetch settings, though local state should be up-to-date
       // fetchSettings();
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error saving settings:", err);
-      const saveErrorMessage = err.message || t('admin.settings.errors.save');
+      // Type guard for error message
+      let saveErrorMessage = t('admin.settings.errors.save');
+      if (err instanceof Error) {
+        saveErrorMessage = err.message;
+      } else if (typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string') {
+        saveErrorMessage = err.message;
+      }
       setError(saveErrorMessage);
       toast.error(saveErrorMessage);
     } finally {

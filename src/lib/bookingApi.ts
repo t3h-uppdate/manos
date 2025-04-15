@@ -1,25 +1,34 @@
 import { supabase } from './supabaseClient';
-import { Service } from './serviceApi'; // Assuming Service type is defined here or in a shared types file
 
 // Define the structure of data needed to create a booking
 // Adjust based on your actual 'bookings' table columns
 export interface NewBookingData {
-  service_id?: number | null; // Made optional, assuming backend allows NULL
-  staff_id?: number | null; // Allow null for simplified booking
-  customer_id: number; // Link to the customer record
+  service_id?: number | null; // bigint maps to number okay here
+  staff_id?: number | null; // bigint maps to number okay here
+  customer_id: string; // Changed to string for UUID
   start_time: string; // ISO 8601 format string (e.g., "2025-04-20T10:00:00Z")
   end_time: string;   // ISO 8601 format string
-  // client_name, client_email, client_phone are now retrieved via customer_id
   status?: string; // e.g., 'confirmed', 'pending' - default in DB or set here
-  message?: string; // Added message field
-  // Add any other relevant fields like notes, price_paid etc.
+  message?: string | null; // Added message field
+  notes?: string | null; // Added notes field to match DB
 }
 
 // Define the structure of a returned Booking (matching DB)
 export interface Booking extends NewBookingData {
-    id: number;
+    id: string; // Changed to string for UUID
     created_at: string;
-    // Include other fields returned from DB if needed
+}
+
+// Define an interface for the data structure used for insertion
+interface BookingInsertData {
+  service_id: number | null;
+  staff_id: number | null;
+  customer_id: string;
+  start_time: string;
+  end_time: string;
+  status: string;
+  notes: string | null;
+  message?: string | null; // Optional message field
 }
 
 
@@ -28,22 +37,22 @@ export const createBooking = async (bookingData: NewBookingData): Promise<Bookin
 
   // Prepare data for insertion, ensuring all required fields from the interface are present
   // Note: client_name, client_email etc. are NOT directly in bookingData anymore
-  const dataToInsert: any = { // Use 'any' temporarily or define a specific insert type
+  const dataToInsert: BookingInsertData = { // Use the specific insert type
     service_id: bookingData.service_id ?? null, // Default to null if not provided
     staff_id: bookingData.staff_id ?? null, // Default to null if not provided
     customer_id: bookingData.customer_id,
     start_time: bookingData.start_time,
     end_time: bookingData.end_time,
-    status: bookingData.status || 'confirmed', // Default to 'confirmed'
-    // notes: bookingData.notes // Add if notes are included in NewBookingData
+    status: bookingData.status || 'confirmed', // Explicitly setting status, overrides DB default 'pending'
+    notes: bookingData.notes ?? null // Add notes if provided, else null
   };
 
-  // Add message only if it exists and is not empty
+  // Add message only if it exists and is not empty or null
   if (bookingData.message && bookingData.message.trim() !== '') {
-    dataToInsert.message = bookingData.message.trim(); // Add message field if provided
+    dataToInsert.message = bookingData.message.trim();
+  } else {
+    dataToInsert.message = null; // Ensure it's set to null if empty/not provided
   }
-
-
   const { data, error } = await supabase
     .from('bookings')
     .insert([dataToInsert])
@@ -76,7 +85,7 @@ export const createBooking = async (bookingData: NewBookingData): Promise<Bookin
  }
 
  // Function to fetch bookings for a specific customer ID
- export const fetchBookingsByCustomerId = async (customerId: number): Promise<DetailedBooking[]> => {
+ export const fetchBookingsByCustomerId = async (customerId: string): Promise<DetailedBooking[]> => { // Changed customerId to string
     const { data, error } = await supabase
       .from('bookings')
       .select(`

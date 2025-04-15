@@ -35,9 +35,15 @@ const AdminCustomers: React.FC = () => {
       if (fetchError) throw fetchError;
 
       setCustomers(data || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error fetching customers:", err);
-      const errorMessage = err.message || t('admin.customers.errors.fetch');
+      // Type guard for error message
+      let errorMessage = t('admin.customers.errors.fetch');
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string') {
+        errorMessage = err.message;
+      }
       toast.error(errorMessage);
       setError(errorMessage); // Keep for conditional rendering
     }
@@ -98,9 +104,15 @@ const AdminCustomers: React.FC = () => {
         currentCustomers.filter((c: Customer) => c.id !== customerId)
       );
       toast.success(t('admin.customers.notifications.delete_success'));
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error deleting customer:", err);
-      const errorMessage = err.message || t('admin.customers.errors.delete');
+      // Type guard for error message
+      let errorMessage = t('admin.customers.errors.delete');
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string') {
+        errorMessage = err.message;
+      }
       toast.error(errorMessage);
       setError(errorMessage); // Keep for conditional rendering
     }

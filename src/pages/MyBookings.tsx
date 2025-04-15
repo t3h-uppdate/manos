@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 // Import booking type and API function to fetch customer bookings
 import { DetailedBooking, fetchBookingsByCustomerId } from '../lib/bookingApi';
 // Import AuthContext to get current user ID
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth'; // Corrected import path
 
 // DetailedBooking type is now imported from bookingApi.ts
 
@@ -34,13 +34,10 @@ const MyBookings: React.FC = () => {
       // Fetch bookings using the actual customer ID (which should be a UUID string from Supabase Auth)
       // We might need to adjust fetchBookingsByCustomerId if the customer_id column type is different (e.g., integer)
       // For now, assuming it expects the user ID directly.
-      // If customer_id in bookings is an integer referencing a separate customers table,
-      // we'd need a different way to get that integer ID based on the auth user.
-      // Let's assume customer_id in bookings *is* the auth user ID (UUID string) for now.
-      // If fetchBookingsByCustomerId expects a number, this will fail.
-      const data = await fetchBookingsByCustomerId(customerId as any); // Use actual API call - Cast to 'any' temporarily if type mismatch expected
+      // If customer_id in bookings *is* the auth user ID (UUID string) for now.
+      const data = await fetchBookingsByCustomerId(customerId); // Use actual API call - Removed 'as any' cast
       setBookings(data); // Use actual data
-    } catch (err) {
+    } catch (err: unknown) { // Use unknown for catch block
       const message = t('my_bookings.errors.load_failed', 'Failed to load your bookings.'); // TODO: Add translation
       setError(message);
       toast.error(message);

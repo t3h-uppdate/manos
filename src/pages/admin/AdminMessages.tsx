@@ -39,9 +39,16 @@ const AdminMessages: React.FC = () => {
         if (error) throw error;
 
         setMessages(data || []);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Error fetching messages:", err);
-        setError(err.message || t('admin.messages.errors.fetch'));
+        // Type guard for error message
+        let errorMessage = t('admin.messages.errors.fetch');
+        if (err instanceof Error) {
+          errorMessage = err.message;
+        } else if (typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string') {
+          errorMessage = err.message;
+        }
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -63,8 +70,16 @@ const AdminMessages: React.FC = () => {
         // Refresh messages list
         setMessages(messages.map(msg => msg.id === messageId ? { ...msg, status: newStatus } : msg));
         toast.success(t('admin.messages.notifications.status_updated', { status: newStatus }));
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error("Error updating message status:", err);
+        // Type guard for error message (optional, as we show a generic toast)
+        let errorDetails = '';
+        if (err instanceof Error) {
+          errorDetails = err.message;
+        } else if (typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string') {
+          errorDetails = err.message;
+        }
+        console.error("Update error details:", errorDetails); // Log details
         toast.error(t('admin.messages.errors.update_status'));
     }
   };

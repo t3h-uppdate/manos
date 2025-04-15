@@ -2,8 +2,9 @@ import { supabase } from './supabaseClient';
 
 // Define the structure of customer data (adjust if your table differs)
 export interface Customer {
-    id: number;
+    id: string; // Changed from number to string for UUID
     created_at?: string;
+    auth_user_id?: string | null; // Added to match DB schema
     name: string;
     email: string;
     phone?: string | null;
@@ -21,9 +22,9 @@ interface CustomerInput {
  * Finds a customer by email. If not found, creates a new customer.
  * Returns the customer's ID.
  * @param customerData - Object containing name, email, and optional phone.
- * @returns The ID of the found or newly created customer.
+ * @returns The UUID string ID of the found or newly created customer.
  */
-export const findOrCreateCustomer = async (customerData: CustomerInput): Promise<number> => {
+export const findOrCreateCustomer = async (customerData: CustomerInput): Promise<string> => {
     const email = customerData.email.toLowerCase().trim();
     const name = customerData.name.trim();
     const phone = customerData.phone?.trim() || null;

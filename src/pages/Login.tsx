@@ -27,8 +27,17 @@ const Login: React.FC = () => {
       // On successful login, redirect to the admin dashboard
       navigate('/admin');
 
-    } catch (error: any) {
-      setError(error.error_description || error.message || "An unknown error occurred");
+    } catch (error: unknown) {
+      // Type guard for error message
+      let errorMessage = "An unknown error occurred";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null && 'error_description' in error && typeof error.error_description === 'string') {
+        errorMessage = error.error_description; // Supabase specific error field
+      } else if (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string') {
+        errorMessage = error.message;
+      }
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
