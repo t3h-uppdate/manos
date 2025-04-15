@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom'; // Import Link for navigation
-import { fetchDashboardSummaryCounts, DashboardSummaryCounts } from '../../lib/dashboardApi'; // Import new API function and type
+import { Link } from 'react-router-dom';
+import { fetchDashboardSummaryCounts, fetchBookingTrends, DashboardSummaryCounts, BookingTrends } from '../../lib/dashboardApi';
+import DashboardStats from '../../components/admin/DashboardStats';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import { Calendar, MessageSquare, Users, Clock } from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {
   const { t } = useTranslation();
-  const [counts, setCounts] = useState<DashboardSummaryCounts>({ // Use new interface
+  const [counts, setCounts] = useState<DashboardSummaryCounts>({
     bookingsToday: null,
-    totalCustomers: null, // Still in interface, but won't be displayed
+    totalCustomers: null,
     newMessages: null,
-    upcomingAppointments24h: null, // Added new metric
+    upcomingAppointments24h: null,
   });
+  const [bookingTrends, setBookingTrends] = useState<BookingTrends>({ labels: [], data: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,75 +23,113 @@ const AdminDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const summaryCounts = await fetchDashboardSummaryCounts();
+        const [summaryCounts, trends] = await Promise.all([
+          fetchDashboardSummaryCounts(),
+          fetchBookingTrends()
+        ]);
+        
         setCounts(summaryCounts);
-        // Check if any count is null, indicating an error during fetch in dashboardApi
+        setBookingTrends(trends);
+        
         if (Object.values(summaryCounts).some(count => count === null)) {
-             // Error is already logged in dashboardApi, set a generic error message
-             setError(t('admin.dashboard.errors.fetch'));
+          setError(t('admin.dashboard.errors.fetch'));
         }
-      } catch (err: unknown) { // Catch errors re-thrown from dashboardApi (if any)
+      } catch (err: unknown) {
         console.error("Error loading dashboard data:", err);
-        // Type guard for error message
         let errorMessage = t('admin.dashboard.errors.fetch');
         if (err instanceof Error) {
           errorMessage = err.message;
-        } else if (typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string') {
-          errorMessage = err.message;
         }
         setError(errorMessage);
-        // Ensure counts are reset or set to null on error
-        setCounts({
-            bookingsToday: null,
-            totalCustomers: null,
-            newMessages: null,
-            upcomingAppointments24h: null,
-        });
       } finally {
         setLoading(false);
       }
     };
 
-    loadDashboardData(); // Corrected function call
-  }, [t]); // Add t to dependency array
+    loadDashboardData();
+  }, [t]);
 
   const renderCount = (count: number | null) => {
-    if (loading) return <span className="text-gray-500">{t('common.loading_indicator')}</span>;
+    if (loading) return <LoadingSpinner size={20} className="text-gray-400" />;
     if (count === null) return <span className="text-red-500">{t('common.error_indicator')}</span>;
     return count;
   };
 
+  const StatCard: React.FC<{
+    title: string;
+    count: number | null;
+    icon: React.ReactNode;
+    to?: string;
+  }> = ({ title, count, icon, to }) => {
+    const content = (
+      <div className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-lg font-medium text-gray-600">{title}</p>
+            <p className="text-3xl font-bold text-gray-800 mt-2">
+              {renderCount(count)}
+            </p>
+          </div>
+          <div className="text-indigo-600">
+            {icon}
+          </div>
+        </div>
+      </div>
+    );
+
+    return to ? (
+      <Link to={to} className="block">
+        {content}
+      </Link>
+    ) : (
+      content
+    );
+  };
+
   return (
-    <div>
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6">{t('admin.dashboard.title')}</h1>
-      {error && <p className="text-red-600 bg-red-100 p-3 rounded mb-4">{error}</p>} {/* Error message is already translated */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6"> {/* Adjusted grid columns */}
-        {/* Bookings Today Card (Clickable) */}
-        <Link to="/admin/bookings" className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 block">
-          <h2 className="text-lg font-medium text-gray-600">{t('admin.dashboard.card.bookings_today')}</h2>
-          <p className="text-3xl font-bold text-gray-800 mt-2">
-            {renderCount(counts.bookingsToday)}
-          </p>
-        </Link>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-semibold text-gray-800">{t('admin.dashboard.title')}</h1>
+      
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+          <p className="text-red-700">{error}</p>
+        </div>
+      )}
 
-        {/* Upcoming Appointments Card */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-           <h2 className="text-lg font-medium text-gray-600">{t('admin.dashboard.card.upcoming_appointments_24h', 'Upcoming (24h)')}</h2> {/* Added translation key */}
-           <p className="text-3xl font-bold text-gray-800 mt-2">
-             {renderCount(counts.upcomingAppointments24h)}
-           </p>
-         </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          title={t('admin.dashboard.card.bookings_today')}
+          count={counts.bookingsToday}
+          icon={<Calendar size={24} />}
+          to="/admin/bookings"
+        />
+        <StatCard
+          title={t('admin.dashboard.card.upcoming_appointments_24h')}
+          count={counts.upcomingAppointments24h}
+          icon={<Clock size={24} />}
+          to="/admin/calendar"
+        />
+        <StatCard
+          title={t('admin.dashboard.card.total_customers')}
+          count={counts.totalCustomers}
+          icon={<Users size={24} />}
+          to="/admin/customers"
+        />
+        <StatCard
+          title={t('admin.dashboard.card.new_messages')}
+          count={counts.newMessages}
+          icon={<MessageSquare size={24} />}
+          to="/admin/messages"
+        />
+      </div>
 
-        {/* New Messages Card (Clickable) */}
-        <Link to="/admin/messages" className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 block">
-          <h2 className="text-lg font-medium text-gray-600">{t('admin.dashboard.card.new_messages')}</h2>
-          <p className="text-3xl font-bold text-gray-800 mt-2">
-            {renderCount(counts.newMessages)}
-          </p>
-        </Link>
-      </div> {/* Closing grid div */}
-      {/* Add more dashboard widgets here later */}
-    </div> // Closing main container div
+      <div className="mt-8">
+        <DashboardStats 
+          bookingTrends={bookingTrends}
+          loading={loading}
+        />
+      </div>
+    </div>
   );
 };
 
