@@ -42,7 +42,8 @@ const Inventory: React.FC = () => {
         setAllProducts(data); // Store fetched data
       } catch (err) {
         console.error('Error fetching public inventory:', err);
-        setError(t('inventory.errors.load', 'Failed to load inventory. Please try again later.'));
+        // Use translation key directly (will be defined in translations.ts)
+        setError(t('inventory.errors.load'));
       } finally {
         setLoading(false);
       }
@@ -102,15 +103,17 @@ const Inventory: React.FC = () => {
     <> {/* Use Fragment */}
       {/* Navbar removed */}
       <main className="flex-grow container mx-auto px-4 py-8"> {/* Removed outer div, main is now top level */}
+        {/* Use translation key */}
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">
-          {t('inventory.title', 'Our Products')}
+          {t('inventory.title')}
         </h1>
 
         {/* Filter and Sort Controls */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 p-4 bg-gray-100 rounded-lg shadow-sm">
           {/* Category Filter */}
           <div className="flex items-center space-x-2 w-full md:w-auto">
-            <label htmlFor="category-filter" className="text-sm font-medium text-gray-700 whitespace-nowrap">{t('inventory.filter_category', 'Filter by Category:')}</label>
+            {/* Use translation key */}
+            <label htmlFor="category-filter" className="text-sm font-medium text-gray-700 whitespace-nowrap">{t('inventory.filter_category')}</label>
             <select
               id="category-filter"
               value={selectedCategory}
@@ -120,7 +123,8 @@ const Inventory: React.FC = () => {
             >
               {categories.map(category => (
                 <option key={category} value={category}>
-                  {category === 'all' ? t('inventory.all_categories', 'All Categories') : category}
+                  {/* Use translation key */}
+                  {category === 'all' ? t('inventory.all_categories') : category}
                 </option>
               ))}
             </select>
@@ -128,7 +132,8 @@ const Inventory: React.FC = () => {
 
           {/* Sort Order */}
           <div className="flex items-center space-x-2 w-full md:w-auto">
-             <label htmlFor="sort-order" className="text-sm font-medium text-gray-700 whitespace-nowrap">{t('inventory.sort_by', 'Sort by:')}</label>
+             {/* Use translation key */}
+             <label htmlFor="sort-order" className="text-sm font-medium text-gray-700 whitespace-nowrap">{t('inventory.sort_by')}</label>
              <select
                id="sort-order"
                value={sortOrder}
@@ -136,11 +141,12 @@ const Inventory: React.FC = () => {
                disabled={loading || !!error || productsToDisplay.length === 0}
                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-white disabled:opacity-50"
              >
-               <option value="default">{t('inventory.sort_default', 'Default')}</option>
-               <option value="price-asc">{t('inventory.sort_price_asc', 'Price: Low to High')}</option>
-               <option value="price-desc">{t('inventory.sort_price_desc', 'Price: High to Low')}</option>
-               <option value="name-asc">{t('inventory.sort_name_asc', 'Name: A to Z')}</option>
-               <option value="name-desc">{t('inventory.sort_name_desc', 'Name: Z to A')}</option>
+               {/* Use translation keys */}
+               <option value="default">{t('inventory.sort_default')}</option>
+               <option value="price-asc">{t('inventory.sort_price_asc')}</option>
+               <option value="price-desc">{t('inventory.sort_price_desc')}</option>
+               <option value="name-asc">{t('inventory.sort_name_asc')}</option>
+               <option value="name-desc">{t('inventory.sort_name_desc')}</option>
              </select>
           </div>
         </div>
@@ -160,9 +166,10 @@ const Inventory: React.FC = () => {
         {/* No Products State (considering filters) */}
         {!loading && !error && productsToDisplay.length === 0 && (
            <p className="text-center text-gray-500 py-10">
+             {/* Use translation keys */}
              {selectedCategory === 'all'
-               ? t('inventory.no_products_available', 'No products are currently available.')
-               : t('inventory.no_products_in_category', `No products found in the "${selectedCategory}" category.`, { category: selectedCategory })}
+               ? t('inventory.no_products_available')
+               : t('inventory.no_products_in_category', { category: selectedCategory })}
            </p>
         )}
 
@@ -187,7 +194,8 @@ const Inventory: React.FC = () => {
         <Modal
           isOpen={isQuickViewOpen}
           onClose={closeQuickView}
-          title={t('inventory.quick_view_modal_title', 'Quick View')}
+          // Use translation key
+          title={t('inventory.quick_view_modal_title')}
           // Optional: Adjust modal size if needed via a prop or className
           // size="large" // Example size prop if Modal supports it
         >
@@ -203,7 +211,8 @@ const Inventory: React.FC = () => {
                 />
               ) : (
                 <div className="h-80 flex items-center justify-center text-gray-500">
-                  {t('inventory.no_image', 'No Image Available')}
+                  {/* Use translation key */}
+                  {t('inventory.no_image')}
                 </div>
               )}
             </div>
@@ -211,7 +220,8 @@ const Inventory: React.FC = () => {
             <div className="flex flex-col">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">{quickViewProduct.name}</h2>
               <p className="text-gray-600 mb-4 flex-grow">
-                {quickViewProduct.description || t('product_detail.no_description', 'No description available.')}
+                {/* Use translation key */}
+                {quickViewProduct.description || t('inventory.no_description')}
               </p>
               <div className="mt-auto">
                  {/* Price Display Logic */}

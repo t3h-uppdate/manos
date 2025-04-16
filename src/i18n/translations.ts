@@ -13,6 +13,25 @@ export const translations = {
       logout: 'Logout', // Added
       adminDashboard: 'Admin Dashboard' // Added
     },
+    inventory: { // Added inventory section for public page
+      title: 'Our Products',
+      filter_category: 'Filter by Category:',
+      all_categories: 'All Categories',
+      sort_by: 'Sort by:',
+      sort_default: 'Default',
+      sort_price_asc: 'Price: Low to High',
+      sort_price_desc: 'Price: High to Low',
+      sort_name_asc: 'Name: A to Z',
+      sort_name_desc: 'Name: Z to A',
+      no_products_available: 'No products are currently available.',
+      no_products_in_category: 'No products found in the "{{category}}" category.',
+      quick_view_modal_title: 'Quick View',
+      no_image: 'No Image Available',
+      no_description: 'No description available.',
+      errors: {
+        load: 'Failed to load inventory. Please try again later.'
+      }
+    },
     home: {
       welcome: 'Welcome to Manos Barber Shop',
       subtitle: 'Where Style Meets Tradition'
@@ -38,6 +57,89 @@ export const translations = {
     footer: {
       followUs: 'Follow Us',
       allRightsReserved: 'All Rights Reserved' // Added
+    },
+    booking: { // Added booking section for portal specific text
+      pageTitle: 'Book Your Appointment',
+      selectDateTimeTitle: 'Select Date & Time',
+      selectDateLabel: 'Select Date:',
+      availableSlotsTitle: 'Available Slots for {{date}}',
+      selectedDateFallback: 'selected date',
+      loadingSlots: 'Loading slots...',
+      noSlots: 'No available slots found for this date.',
+      enterDetailsTitle: 'Enter Your Details & Needs',
+      backToTimeSelection: '← Back to Time Selection',
+      bookingAtPrefix: 'Booking appointment at ',
+      bookingAtSuffix: '.',
+      bookingAs: 'Booking as: {{email}}',
+      phoneLabel: 'Phone Number (Optional)',
+      messageLabel: 'Message / Needs',
+      messagePlaceholder: 'Please briefly describe the service or reason for your appointment.',
+      confirmButton: 'Confirm Booking',
+      bookingButtonLoading: 'Booking...',
+      confirmationTitle: 'Booking Request Sent!',
+      confirmationGreeting: 'Thank you, {{name}}!',
+      confirmationMessagePrefix: 'Your appointment request for ',
+      confirmationMessageSuffix: ' has been submitted.',
+      reviewMessagePrompt: 'We will review your request and message:',
+      confirmationEmailNotice: 'You should receive a confirmation email shortly (feature not implemented yet).',
+      bookAnotherButton: 'Book Another Appointment',
+      authenticating: 'Authenticating...',
+      invalidStep: 'Invalid step',
+      errorLoadAvailability: 'Could not load available times. Please try again later.',
+      errorAuthRequired: 'You must be logged in to book an appointment.',
+      errorSelectSlot: 'Please select a time slot.',
+      errorEnterMessage: 'Please enter a message describing your needs.',
+      errorUserNotAuthInternal: 'User is not authenticated.', // Internal error, might not need translation but good practice
+      errorCreateBooking: 'Failed to create booking. Please try again.',
+      authModal: {
+        title: 'Login Required',
+        message: 'You need to be logged in or registered to book an appointment.'
+      }
+    },
+    auth: { // Added auth section for Login/Register
+      register: {
+        title: 'Create your account',
+        nameLabel: 'Full Name',
+        namePlaceholder: 'Full Name',
+        emailLabel: 'Email address',
+        emailPlaceholder: 'Email address',
+        phoneLabel: 'Phone Number (Optional)',
+        phonePlaceholder: 'Phone Number (Optional)',
+        passwordLabel: 'Password',
+        passwordPlaceholder: 'Password (min. 6 characters)',
+        submitButton: 'Create account',
+        loadingButton: 'Creating account...',
+        alreadyHaveAccount: 'Already have an account?',
+        signInLink: 'Sign in',
+        successMessage: 'Registration successful! Please check your email to confirm your account.',
+        errorUserIdNotFound: 'Registration successful but user ID not found.',
+        errorProfileSave: 'Account created, but failed to save profile: {{message}}',
+        errorGeneric: 'Failed to register.'
+      },
+      login: {
+        title: 'Admin Login',
+        emailLabel: 'Email address',
+        emailPlaceholder: 'you@example.com',
+        passwordLabel: 'Password',
+        passwordPlaceholder: 'Password',
+        submitButton: 'Log in',
+        loadingButton: 'Logging in...',
+        errorUnknown: 'An unknown error occurred during login.'
+        // Add specific error keys if needed, e.g., 'Invalid login credentials.'
+      },
+      customerLogin: { // Added for customer login page
+        title: 'Sign in to your account',
+        emailLabel: 'Email address',
+        emailPlaceholder: 'Email address',
+        passwordLabel: 'Password',
+        passwordPlaceholder: 'Password',
+        submitButton: 'Sign in',
+        loadingButton: 'Signing in...',
+        noAccount: "Don't have an account?",
+        signUpLink: 'Sign up',
+        errorGeneric: 'Failed to log in. Please check your credentials.'
+        // Add specific error keys if needed
+      }
     },
     my_bookings: { // Added My Bookings section
       title: 'My Bookings',
@@ -459,6 +561,25 @@ export const translations = {
       logout: 'تسجيل الخروج', // Added
       adminDashboard: 'لوحة تحكم المشرف' // Added
     },
+    inventory: { // Added inventory section for public page (Arabic)
+      title: 'منتجاتنا',
+      filter_category: 'تصفية حسب الفئة:',
+      all_categories: 'جميع الفئات',
+      sort_by: 'ترتيب حسب:',
+      sort_default: 'افتراضي',
+      sort_price_asc: 'السعر: من الأقل إلى الأعلى',
+      sort_price_desc: 'السعر: من الأعلى إلى الأقل',
+      sort_name_asc: 'الاسم: أ إلى ي',
+      sort_name_desc: 'الاسم: ي إلى أ',
+      no_products_available: 'لا توجد منتجات متاحة حالياً.',
+      no_products_in_category: 'لم يتم العثور على منتجات في فئة "{{category}}".',
+      quick_view_modal_title: 'نظرة سريعة',
+      no_image: 'لا توجد صورة متاحة',
+      no_description: 'لا يوجد وصف متاح.',
+      errors: {
+        load: 'فشل تحميل المخزون. يرجى المحاولة مرة أخرى لاحقاً.'
+      }
+    },
     home: {
       welcome: 'مرحباً بكم في صالون مانوس',
       subtitle: 'حيث يلتقي الأسلوب بالتقاليد'
@@ -484,6 +605,89 @@ export const translations = {
     footer: {
       followUs: 'تابعنا',
       allRightsReserved: 'جميع الحقوق محفوظة' // Added
+    },
+    booking: { // Added booking section for portal specific text (Arabic)
+      pageTitle: 'احجز موعدك',
+      selectDateTimeTitle: 'اختر التاريخ والوقت',
+      selectDateLabel: 'اختر التاريخ:',
+      availableSlotsTitle: 'الأوقات المتاحة لـ {{date}}',
+      selectedDateFallback: 'التاريخ المحدد',
+      loadingSlots: 'جار تحميل الأوقات...',
+      noSlots: 'لا توجد أوقات متاحة لهذا التاريخ.',
+      enterDetailsTitle: 'أدخل تفاصيلك واحتياجاتك',
+      backToTimeSelection: '→ العودة لاختيار الوقت',
+      bookingAtPrefix: 'حجز موعد في ',
+      bookingAtSuffix: '.',
+      bookingAs: 'الحجز باسم: {{email}}',
+      phoneLabel: 'رقم الهاتف (اختياري)',
+      messageLabel: 'الرسالة / الاحتياجات',
+      messagePlaceholder: 'يرجى وصف الخدمة أو سبب الموعد بإيجاز.',
+      confirmButton: 'تأكيد الحجز',
+      bookingButtonLoading: 'جار الحجز...',
+      confirmationTitle: 'تم إرسال طلب الحجز!',
+      confirmationGreeting: 'شكراً لك، {{name}}!',
+      confirmationMessagePrefix: 'تم تقديم طلب موعدك لـ ',
+      confirmationMessageSuffix: '.',
+      reviewMessagePrompt: 'سنراجع طلبك ورسالتك:',
+      confirmationEmailNotice: 'ستتلقى رسالة تأكيد بالبريد الإلكتروني قريباً (الميزة غير مطبقة بعد).',
+      bookAnotherButton: 'حجز موعد آخر',
+      authenticating: 'جار المصادقة...',
+      invalidStep: 'خطوة غير صالحة',
+      errorLoadAvailability: 'تعذر تحميل الأوقات المتاحة. يرجى المحاولة مرة أخرى لاحقاً.',
+      errorAuthRequired: 'يجب عليك تسجيل الدخول لحجز موعد.',
+      errorSelectSlot: 'يرجى اختيار وقت.',
+      errorEnterMessage: 'يرجى إدخال رسالة تصف احتياجاتك.',
+      errorUserNotAuthInternal: 'المستخدم غير مصادق عليه.', // خطأ داخلي
+      errorCreateBooking: 'فشل إنشاء الحجز. يرجى المحاولة مرة أخرى.',
+      authModal: {
+        title: 'تسجيل الدخول مطلوب',
+        message: 'تحتاج إلى تسجيل الدخول أو التسجيل لحجز موعد.'
+      }
+    },
+    auth: { // Added auth section for Login/Register (Arabic)
+      register: {
+        title: 'أنشئ حسابك',
+        nameLabel: 'الاسم الكامل',
+        namePlaceholder: 'الاسم الكامل',
+        emailLabel: 'عنوان البريد الإلكتروني',
+        emailPlaceholder: 'عنوان البريد الإلكتروني',
+        phoneLabel: 'رقم الهاتف (اختياري)',
+        phonePlaceholder: 'رقم الهاتف (اختياري)',
+        passwordLabel: 'كلمة المرور',
+        passwordPlaceholder: 'كلمة المرور (6 أحرف على الأقل)',
+        submitButton: 'إنشاء حساب',
+        loadingButton: 'جارٍ إنشاء الحساب...',
+        alreadyHaveAccount: 'هل لديك حساب بالفعل؟',
+        signInLink: 'تسجيل الدخول',
+        successMessage: 'تم التسجيل بنجاح! يرجى التحقق من بريدك الإلكتروني لتأكيد حسابك.',
+        errorUserIdNotFound: 'تم التسجيل بنجاح ولكن لم يتم العثور على معرف المستخدم.',
+        errorProfileSave: 'تم إنشاء الحساب، ولكن فشل حفظ الملف الشخصي: {{message}}',
+        errorGeneric: 'فشل التسجيل.'
+      },
+      login: {
+        title: 'تسجيل دخول المشرف',
+        emailLabel: 'عنوان البريد الإلكتروني',
+        emailPlaceholder: 'you@example.com',
+        passwordLabel: 'كلمة المرور',
+        passwordPlaceholder: 'كلمة المرور',
+        submitButton: 'تسجيل الدخول',
+        loadingButton: 'جارٍ تسجيل الدخول...',
+        errorUnknown: 'حدث خطأ غير معروف أثناء تسجيل الدخول.'
+        // Add specific error keys if needed
+      },
+      customerLogin: { // Added for customer login page (Arabic)
+        title: 'تسجيل الدخول إلى حسابك',
+        emailLabel: 'عنوان البريد الإلكتروني',
+        emailPlaceholder: 'عنوان البريد الإلكتروني',
+        passwordLabel: 'كلمة المرور',
+        passwordPlaceholder: 'كلمة المرور',
+        submitButton: 'تسجيل الدخول',
+        loadingButton: 'جارٍ تسجيل الدخول...',
+        noAccount: 'ليس لديك حساب؟',
+        signUpLink: 'إنشاء حساب',
+        errorGeneric: 'فشل تسجيل الدخول. يرجى التحقق من بيانات الاعتماد الخاصة بك.'
+        // Add specific error keys if needed
+      }
     },
     my_bookings: { // Added My Bookings section
       title: 'حجوزاتي',

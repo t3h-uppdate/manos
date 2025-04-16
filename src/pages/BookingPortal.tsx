@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react'; // Import useLayoutEffect for immediate checks
-import { useNavigate, useLocation } from 'react-router-dom'; // Import useNavigate and useLocation
+import React, { useState, useEffect } from 'react'; // Removed useLayoutEffect
+import { useNavigate, useLocation, Link } from 'react-router-dom'; // Import useNavigate, useLocation, and Link
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 import DatePicker from 'react-datepicker'; // Import DatePicker
 import 'react-datepicker/dist/react-datepicker.css'; // Import default styles
 // Import API functions to fetch services, staff, availability, and create bookings
@@ -7,6 +8,7 @@ import { fetchStaffAvailability, AvailableSlot } from '../lib/availabilityApi'; 
 import { createBooking, NewBookingData } from '../lib/bookingApi'; // Import booking API and type
 import { findOrCreateCustomer } from '../lib/customerApi'; // Import customer API
 import { useAuth } from '../hooks/useAuth'; // Updated import path for useAuth
+import Modal from '../components/Modal'; // Import the Modal component
 // Removed serviceApi import
 // TODO: Import necessary types (Service, Staff, Booking etc.)
 // TODO: Import components for displaying services, calendar/time slots, forms
@@ -17,6 +19,7 @@ import { useAuth } from '../hooks/useAuth'; // Updated import path for useAuth
 const DEFAULT_APPOINTMENT_DURATION = 30; // Changed from 60
 
 const BookingPortal: React.FC = () => {
+  const { t } = useTranslation(); // Initialize translation hook
   const { user, loading: authLoading } = useAuth(); // Get user state
   const navigate = useNavigate(); // Get navigate function
   const location = useLocation(); // Get location for redirect logic
@@ -29,6 +32,7 @@ const BookingPortal: React.FC = () => {
   const [clientMessage, setClientMessage] = useState(''); // State for the client's message
   const [loading, setLoading] = useState<boolean>(false); // Loading state for API calls within the component
   const [error, setError] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false); // State for login/register modal
 
   // Removed useEffect for fetching services
 
@@ -55,7 +59,8 @@ const BookingPortal: React.FC = () => {
           }
         } catch (err) {
           console.error("Failed to load availability:", err);
-          const message = err instanceof Error ? err.message : "Could not load available times. Please try again later.";
+          // Use translation key for error message
+          const message = err instanceof Error ? err.message : t('booking.errorLoadAvailability');
           setError(message);
           // toast.error(message);
         } finally {
@@ -73,9 +78,14 @@ const BookingPortal: React.FC = () => {
   // Removed handleSelectService
 
   const handleSelectSlot = (slot: AvailableSlot) => { // Update parameter type
-    // No auth check needed here, will be handled before rendering step 2
-    setSelectedSlot(slot);
-    setStep(2); // Move to step 2 (Enter Details)
+    if (!user) {
+      // If user is not logged in, show the modal instead of proceeding
+      setShowAuthModal(true);
+    } else {
+      // If user is logged in, proceed to the details step
+      setSelectedSlot(slot);
+      setStep(2); // Move to step 2 (Enter Details)
+    }
   };
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
@@ -83,19 +93,22 @@ const BookingPortal: React.FC = () => {
 
     // Check if user is logged in before submitting
     if (!user || !user.email) {
-        setError("You must be logged in to book an appointment.");
+        // Use translation key for error message
+        setError(t('booking.errorAuthRequired'));
         navigate('/login?redirect=/book');
         return;
     }
 
     // Check only for selectedSlot
     if (!selectedSlot || !selectedSlot.datetime) {
-      setError("Please select a time slot.");
+      // Use translation key for error message
+      setError(t('booking.errorSelectSlot'));
       return;
     }
     // Add validation for the message if required (e.g., not empty)
     if (!clientMessage.trim()) {
-        setError("Please enter a message describing your needs.");
+        // Use translation key for error message
+        setError(t('booking.errorEnterMessage'));
         return; // Prevent submission if message is empty
     }
 
@@ -109,7 +122,8 @@ const BookingPortal: React.FC = () => {
 
       // Ensure user is non-null here (already checked at function start)
       if (!user) {
-          throw new Error("User is not authenticated."); // Should not happen
+          // Use translation key for internal error
+          throw new Error(t('booking.errorUserNotAuthInternal')); // Should not happen
       }
 
       const customerId = await findOrCreateCustomer({
@@ -139,7 +153,8 @@ const BookingPortal: React.FC = () => {
       setStep(3); // Move to confirmation step (new Step 3)
     } catch (err) {
       console.error("Failed to create booking:", err);
-      const message = err instanceof Error ? err.message : "Failed to create booking. Please try again.";
+      // Use translation key for error message
+      const message = err instanceof Error ? err.message : t('booking.errorCreateBooking');
       setError(message);
       // Optionally add toast notification
       // toast.error(message);
@@ -148,21 +163,13 @@ const BookingPortal: React.FC = () => {
     }
   };
 
-  // Effect to handle redirection *before* rendering protected steps
-  // useLayoutEffect runs synchronously after DOM mutations but before paint
-  useLayoutEffect(() => {
-      // Only check/redirect if auth isn't loading and step requires login (Steps 2 and 3 now)
-      if (!authLoading && (step === 2 || step === 3) && !user) {
-          console.log("Redirecting to login from step", step);
-          // Include current path as redirect target
-          navigate(`/login?redirect=${location.pathname}${location.search}`);
-      }
-  }, [step, user, authLoading, navigate, location]); // location added
+  // Removed the useLayoutEffect that handled redirection for steps 2 & 3
 
   const renderStepContent = () => {
     // Show loading indicator while checking auth state initially
     if (authLoading) {
-        return <div className="text-center p-10">Authenticating...</div>;
+        // Use translation key
+        return <div className="text-center p-10">{t('booking.authenticating')}</div>;
     }
 
     // If we are in a protected step but the effect hasn't redirected yet (e.g., mid-render), render null
@@ -171,7 +178,9 @@ const BookingPortal: React.FC = () => {
      }
 
     // Proceed with rendering steps if authenticated or if step doesn't require auth
-    if (loading && step !== 1) return <div className="text-center p-10">Loading...</div>; // Show loading for steps 2/3
+    // Use common loading key
+    if (loading && step !== 1) return <div className="text-center p-10">{t('common.loading')}</div>;
+    // Error is already potentially translated from API calls or validation checks
     if (error) return <div className="text-center p-10 text-red-600">{error}</div>;
 
 
@@ -180,12 +189,14 @@ const BookingPortal: React.FC = () => {
       case 1:
         return (
           <div>
-            <h2 className="text-2xl font-semibold mb-4">Select Date & Time</h2>
+            {/* Use translation key */}
+            <h2 className="text-2xl font-semibold mb-4">{t('booking.selectDateTimeTitle')}</h2>
             {/* Removed Back button */}
 
             {/* Date Picker */}
             <div className="mb-6">
-              <label htmlFor="bookingDate" className="block text-sm font-medium text-gray-700 mb-1">Select Date:</label>
+              {/* Use translation key */}
+              <label htmlFor="bookingDate" className="block text-sm font-medium text-gray-700 mb-1">{t('booking.selectDateLabel')}</label>
               <DatePicker
                 id="bookingDate"
                 selected={selectedDate}
@@ -197,11 +208,12 @@ const BookingPortal: React.FC = () => {
             </div>
 
             {/* Available Slots for Selected Date */}
-            <h3 className="text-xl font-semibold mb-3">Available Slots for {selectedDate ? selectedDate.toLocaleDateString() : 'selected date'}:</h3>
+            {/* Use translation key with interpolation and fallback key */}
+            <h3 className="text-xl font-semibold mb-3">{t('booking.availableSlotsTitle', { date: selectedDate ? selectedDate.toLocaleDateString() : t('booking.selectedDateFallback') })}:</h3>
             {loading ? ( // Show loading indicator when fetching slots
-                 <p>Loading slots...</p>
+                 <p>{/* Use translation key */}{t('booking.loadingSlots')}</p>
             ) : availableSlots.length === 0 ? (
-              <p>No available slots found for this date.</p>
+              <p>{/* Use translation key */}{t('booking.noSlots')}</p>
             ) : (
               // Display simple list of time slots
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
@@ -226,16 +238,21 @@ const BookingPortal: React.FC = () => {
       case 2:
         return (
           <div>
-            <h2 className="text-2xl font-semibold mb-4">Enter Your Details & Needs</h2>
-            <button onClick={() => setStep(1)} className="mb-4 text-indigo-600 hover:underline">&larr; Back to Time Selection</button>
+            {/* Use translation key */}
+            <h2 className="text-2xl font-semibold mb-4">{t('booking.enterDetailsTitle')}</h2>
+            {/* Use translation key */}
+            <button onClick={() => setStep(1)} className="mb-4 text-indigo-600 hover:underline">{t('booking.backToTimeSelection')}</button>
             {/* Removed service name */}
-            <p className="mb-4">Booking appointment at <strong>{selectedSlot ? new Date(selectedSlot.datetime).toLocaleString() : ''}</strong>.</p>
+            {/* Use translation keys for structure */}
+            <p className="mb-4">{t('booking.bookingAtPrefix')} <strong>{selectedSlot ? new Date(selectedSlot.datetime).toLocaleString() : ''}</strong>{t('booking.bookingAtSuffix')}</p>
             {/* Display logged-in user email */}
-            <p className="mb-4 text-sm text-gray-600">Booking as: {user?.email}</p>
+            {/* Use translation key with interpolation */}
+            <p className="mb-4 text-sm text-gray-600">{t('booking.bookingAs', { email: user?.email })}</p>
             <form onSubmit={handleBookingSubmit} className="space-y-4 max-w-md mx-auto">
               {/* Removed Name and Email fields */}
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone Number (Optional)</label>
+                {/* Use translation key */}
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">{t('booking.phoneLabel')}</label>
                 <input
                     type="tel"
                     id="phone"
@@ -247,7 +264,8 @@ const BookingPortal: React.FC = () => {
               </div>
               {/* Add Message Textarea */}
               <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700">Message / Needs</label>
+                {/* Use translation key */}
+                <label htmlFor="message" className="block text-sm font-medium text-gray-700">{t('booking.messageLabel')}</label>
                 <textarea
                     id="message"
                     name="message"
@@ -256,11 +274,13 @@ const BookingPortal: React.FC = () => {
                     onChange={(e) => setClientMessage(e.target.value)}
                     required // Make message required
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="Please briefly describe the service or reason for your appointment."
+                    // Use translation key for placeholder
+                    placeholder={t('booking.messagePlaceholder')}
                 />
               </div>
+              {/* Use translation keys for button text */}
               <button type="submit" disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out disabled:opacity-50">
-                {loading ? 'Booking...' : 'Confirm Booking'}
+                {loading ? t('booking.bookingButtonLoading') : t('booking.confirmButton')}
               </button>
             </form>
           </div>
@@ -273,29 +293,64 @@ const BookingPortal: React.FC = () => {
 
         return (
           <div className="text-center p-10">
-            <h2 className="text-2xl font-semibold mb-4 text-green-600">Booking Request Sent!</h2>
+            {/* Use translation key */}
+            <h2 className="text-2xl font-semibold mb-4 text-green-600">{t('booking.confirmationTitle')}</h2>
             {/* Use user email or fetched name */}
-            <p>Thank you, {user.user_metadata?.full_name || user.email}!</p>
+            {/* Use translation key with interpolation */}
+            <p>{t('booking.confirmationGreeting', { name: user.user_metadata?.full_name || user.email })}</p>
             {/* Removed service name */}
-            <p>Your appointment request for <strong>{selectedSlot ? new Date(selectedSlot.datetime).toLocaleString() : ''}</strong> has been submitted.</p>
-            <p className="mt-2">We will review your request and message:</p>
+            {/* Use translation keys for structure */}
+            <p>{t('booking.confirmationMessagePrefix')} <strong>{selectedSlot ? new Date(selectedSlot.datetime).toLocaleString() : ''}</strong>{t('booking.confirmationMessageSuffix')}</p>
+            {/* Use translation key */}
+            <p className="mt-2">{t('booking.reviewMessagePrompt')}</p>
             <p className="mt-1 p-2 bg-gray-100 rounded text-sm text-left italic">"{clientMessage}"</p>
-            <p className="mt-4">You should receive a confirmation email shortly (feature not implemented yet).</p>
+            {/* Use translation key */}
+            <p className="mt-4">{t('booking.confirmationEmailNotice')}</p>
             {/* Reset state including message */}
+            {/* Use translation key */}
             <button onClick={() => { setStep(1); setSelectedSlot(null); setClientPhone(''); setClientMessage(''); setSelectedDate(new Date()); }} className="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
-              Book Another Appointment
+              {t('booking.bookAnotherButton')}
             </button>
           </div>
         );
       default:
-        return <div>Invalid step</div>;
+        // Use translation key
+        return <div>{t('booking.invalidStep')}</div>;
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-center mb-8">Book Your Appointment</h1>
+      {/* Use translation key */}
+      <h1 className="text-3xl font-bold text-center mb-8">{t('booking.pageTitle')}</h1>
       {renderStepContent()}
+
+      {/* Login/Register Modal */}
+      <Modal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        title={t('booking.authModal.title')} // Use translation key
+      >
+        <div className="text-center">
+          <p className="mb-4">{t('booking.authModal.message')}</p> {/* Use translation key */}
+          <div className="flex justify-center space-x-4">
+            <Link
+              to={`/login?redirect=${location.pathname}${location.search}`} // Redirect back after login
+              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+              onClick={() => setShowAuthModal(false)} // Close modal on click
+            >
+              {t('navigation.login')} {/* Use translation key */}
+            </Link>
+            <Link
+              to={`/register?redirect=${location.pathname}${location.search}`} // Redirect back after register
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              onClick={() => setShowAuthModal(false)} // Close modal on click
+            >
+              {t('navigation.register')} {/* Use translation key */}
+            </Link>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

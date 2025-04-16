@@ -63,9 +63,10 @@ function App() {
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/about" element={<About />} /> {/* Add About route */}
           <Route path="/product/:categorySlug/:productSlug" element={<ProductDetail />} /> {/* Updated Product Detail route */}
+          {/* Public Booking Route */}
+          <Route path="/book" element={<BookingPortal />} />
            {/* Protected Customer Route */}
            <Route element={<CustomerProtectedRoute />}>
-             <Route path="/book" element={<BookingPortal />} />
              <Route path="/my-bookings" element={<MyBookings />} /> {/* Add My Bookings route */}
              {/* Add other customer-only routes here later */}
            </Route>

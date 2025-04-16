@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom'; // Removed useNavigate
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { supabase } from '../lib/supabaseClient';
 // We might need findOrCreateCustomer if we want to prevent duplicate customer entries
 // even if auth signup fails later, but let's keep it simple for now.
 // We'll create the customer record *after* successful auth signup.
 
 const CustomerRegister: React.FC = () => {
+  const { t } = useTranslation(); // Initialize translation hook
   // Removed navigate initialization
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -38,7 +40,8 @@ const CustomerRegister: React.FC = () => {
 
       // Check if user object exists and has an ID
       if (!authData.user?.id) {
-          throw new Error("Registration successful but user ID not found.");
+          // Use translation key
+          throw new Error(t('auth.register.errorUserIdNotFound'));
       }
 
       const userId = authData.user.id;
@@ -58,20 +61,23 @@ const CustomerRegister: React.FC = () => {
            // if the customer record fails, but that's more complex (e.g., using edge functions).
            // For now, log the error and inform the user.
            console.error("Error creating customer profile:", customerError);
-           throw new Error(`Account created, but failed to save profile: ${customerError.message}`);
+           // Use translation key with interpolation
+           throw new Error(t('auth.register.errorProfileSave', { message: customerError.message }));
        }
 
       // Registration successful
-      setMessage("Registration successful! Please check your email to confirm your account.");
+      // Use translation key
+      setMessage(t('auth.register.successMessage'));
       // Don't navigate immediately, user needs to confirm email usually
       // navigate('/login');
 
     } catch (err: unknown) {
       console.error('Registration error:', err);
       // Type guard for error message
-      let errorMessage = 'Failed to register.';
+      // Use translation key for default error
+      let errorMessage = t('auth.register.errorGeneric');
       if (err instanceof Error) {
-        errorMessage = err.message;
+        errorMessage = err.message; // Keep specific DB/Auth errors if available
       } else if (typeof err === 'object' && err !== null && 'error_description' in err && typeof err.error_description === 'string') {
         errorMessage = err.error_description; // Supabase specific error field
       } else if (typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string') {
@@ -87,8 +93,9 @@ const CustomerRegister: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-lg shadow-md">
         <div>
+          {/* Use translation key */}
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
+            {t('auth.register.title')}
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleRegister}>
@@ -97,7 +104,8 @@ const CustomerRegister: React.FC = () => {
 
           <div className="rounded-md shadow-sm -space-y-px">
              <div>
-              <label htmlFor="name" className="sr-only">Full Name</label>
+              {/* Use translation key */}
+              <label htmlFor="name" className="sr-only">{t('auth.register.nameLabel')}</label>
               <input
                 id="name"
                 name="name"
@@ -105,14 +113,16 @@ const CustomerRegister: React.FC = () => {
                 autoComplete="name"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Full Name"
+                // Use translation key
+                placeholder={t('auth.register.namePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={loading}
               />
             </div>
             <div>
-              <label htmlFor="email-address" className="sr-only">Email address</label>
+              {/* Use translation key */}
+              <label htmlFor="email-address" className="sr-only">{t('auth.register.emailLabel')}</label>
               <input
                 id="email-address"
                 name="email"
@@ -120,28 +130,32 @@ const CustomerRegister: React.FC = () => {
                 autoComplete="email"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
+                // Use translation key
+                placeholder={t('auth.register.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
               />
             </div>
              <div>
-              <label htmlFor="phone" className="sr-only">Phone Number (Optional)</label>
+              {/* Use translation key */}
+              <label htmlFor="phone" className="sr-only">{t('auth.register.phoneLabel')}</label>
               <input
                 id="phone"
                 name="phone"
                 type="tel"
                 autoComplete="tel"
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Phone Number (Optional)"
+                // Use translation key
+                placeholder={t('auth.register.phonePlaceholder')}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 disabled={loading}
               />
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">Password</label>
+              {/* Use translation key */}
+              <label htmlFor="password" className="sr-only">{t('auth.register.passwordLabel')}</label>
               <input
                 id="password"
                 name="password"
@@ -149,7 +163,8 @@ const CustomerRegister: React.FC = () => {
                 autoComplete="new-password"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password (min. 6 characters)"
+                // Use translation key
+                placeholder={t('auth.register.passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
@@ -163,15 +178,17 @@ const CustomerRegister: React.FC = () => {
               disabled={loading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
             >
-              {loading ? 'Creating account...' : 'Create account'}
+              {/* Use translation keys */}
+              {loading ? t('auth.register.loadingButton') : t('auth.register.submitButton')}
             </button>
           </div>
         </form>
          <div className="text-sm text-center">
           <p>
-            Already have an account?{' '}
+            {/* Use translation keys */}
+            {t('auth.register.alreadyHaveAccount')}{' '}
             <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Sign in
+              {t('auth.register.signInLink')}
             </Link>
           </p>
         </div>
