@@ -100,16 +100,16 @@ const Inventory: React.FC = () => {
 
 
   return (
-    <> {/* Use Fragment */}
+    <div className="bg-gray-50"> {/* Apply background */}
       {/* Navbar removed */}
-      <main className="flex-grow container mx-auto px-4 py-8"> {/* Removed outer div, main is now top level */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12"> {/* Standardize container */}
         {/* Use translation key */}
-        <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">
+        <h1 className="text-4xl font-serif text-center mb-12"> {/* Update title style */}
           {t('inventory.title')}
         </h1>
 
         {/* Filter and Sort Controls */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 p-4 bg-gray-100 rounded-lg shadow-sm">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 p-6 bg-white rounded-lg shadow-md"> {/* Style filter/sort controls */}
           {/* Category Filter */}
           <div className="flex items-center space-x-2 w-full md:w-auto">
             {/* Use translation key */}
@@ -119,7 +119,7 @@ const Inventory: React.FC = () => {
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               disabled={loading || !!error || categories.length <= 1}
-              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-white disabled:opacity-50"
+              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:border-[#D4AF37] focus:ring focus:ring-[#D4AF37] focus:ring-opacity-50 sm:text-sm rounded-md bg-white disabled:opacity-50" // Update focus style
             >
               {categories.map(category => (
                 <option key={category} value={category}>
@@ -139,7 +139,7 @@ const Inventory: React.FC = () => {
                value={sortOrder}
                onChange={(e) => setSortOrder(e.target.value as SortOption)}
                disabled={loading || !!error || productsToDisplay.length === 0}
-               className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-white disabled:opacity-50"
+               className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:border-[#D4AF37] focus:ring focus:ring-[#D4AF37] focus:ring-opacity-50 sm:text-sm rounded-md bg-white disabled:opacity-50" // Update focus style
              >
                {/* Use translation keys */}
                <option value="default">{t('inventory.sort_default')}</option>
@@ -241,7 +241,7 @@ const Inventory: React.FC = () => {
           </div>
         </Modal>
       )}
-    </> // Close Fragment
+    </div> // Close background div
   );
 };
 

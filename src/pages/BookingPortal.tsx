@@ -224,7 +224,7 @@ const BookingPortal: React.FC = () => {
                       <button
                         key={slot.datetime} // Use datetime as key
                         onClick={() => handleSelectSlot(slot)}
-                        className="p-2 border rounded bg-gray-100 hover:bg-indigo-100 text-center text-sm"
+                        className="p-2 border rounded bg-gray-100 hover:bg-[#D4AF37]/20 text-center text-sm" // Update hover color
                       >
                         {/* Format time as HH-mm (24-hour) */}
                         {`${String(new Date(slot.datetime).getHours()).padStart(2, '0')}-${String(new Date(slot.datetime).getMinutes()).padStart(2, '0')}`}
@@ -241,7 +241,7 @@ const BookingPortal: React.FC = () => {
             {/* Use translation key */}
             <h2 className="text-2xl font-semibold mb-4">{t('booking.enterDetailsTitle')}</h2>
             {/* Use translation key */}
-            <button onClick={() => setStep(1)} className="mb-4 text-indigo-600 hover:underline">{t('booking.backToTimeSelection')}</button>
+            <button onClick={() => setStep(1)} className="mb-4 text-[#D4AF37] hover:text-[#B4941F] hover:underline">{t('booking.backToTimeSelection')}</button> {/* Update text color */}
             {/* Removed service name */}
             {/* Use translation keys for structure */}
             <p className="mb-4">{t('booking.bookingAtPrefix')} <strong>{selectedSlot ? new Date(selectedSlot.datetime).toLocaleString() : ''}</strong>{t('booking.bookingAtSuffix')}</p>
@@ -259,7 +259,7 @@ const BookingPortal: React.FC = () => {
                     name="phone"
                     value={clientPhone}
                     onChange={(e) => setClientPhone(e.target.value)} // Update phone state directly
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-[#D4AF37] focus:ring focus:ring-[#D4AF37] focus:ring-opacity-50" // Update focus style
                 />
               </div>
               {/* Add Message Textarea */}
@@ -273,13 +273,13 @@ const BookingPortal: React.FC = () => {
                     value={clientMessage}
                     onChange={(e) => setClientMessage(e.target.value)}
                     required // Make message required
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-[#D4AF37] focus:ring focus:ring-[#D4AF37] focus:ring-opacity-50" // Update focus style
                     // Use translation key for placeholder
                     placeholder={t('booking.messagePlaceholder')}
                 />
               </div>
               {/* Use translation keys for button text */}
-              <button type="submit" disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out disabled:opacity-50">
+              <button type="submit" disabled={loading} className="w-full bg-[#D4AF37] hover:bg-[#B4941F] text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out disabled:opacity-50"> {/* Update button color */}
                 {loading ? t('booking.bookingButtonLoading') : t('booking.confirmButton')}
               </button>
             </form>
@@ -308,7 +308,7 @@ const BookingPortal: React.FC = () => {
             <p className="mt-4">{t('booking.confirmationEmailNotice')}</p>
             {/* Reset state including message */}
             {/* Use translation key */}
-            <button onClick={() => { setStep(1); setSelectedSlot(null); setClientPhone(''); setClientMessage(''); setSelectedDate(new Date()); }} className="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
+            <button onClick={() => { setStep(1); setSelectedSlot(null); setClientPhone(''); setClientMessage(''); setSelectedDate(new Date()); }} className="mt-6 bg-[#D4AF37] hover:bg-[#B4941F] text-white font-bold py-2 px-4 rounded"> {/* Update button color */}
               {t('booking.bookAnotherButton')}
             </button>
           </div>
@@ -320,12 +320,14 @@ const BookingPortal: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Use translation key */}
-      <h1 className="text-3xl font-bold text-center mb-8">{t('booking.pageTitle')}</h1>
-      {renderStepContent()}
+    <div className="bg-gray-50"> {/* Apply background */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12"> {/* Standardize container */}
+        {/* Use translation key */}
+        <h1 className="text-4xl font-serif text-center mb-12">{t('booking.pageTitle')}</h1> {/* Update title style */}
+        {renderStepContent()}
 
-      {/* Login/Register Modal */}
+        {/* Login/Register Modal */}
+      </div> {/* Close the max-w-7xl container HERE */}
       <Modal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
@@ -336,14 +338,14 @@ const BookingPortal: React.FC = () => {
           <div className="flex justify-center space-x-4">
             <Link
               to={`/login?redirect=${location.pathname}${location.search}`} // Redirect back after login
-              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+              className="px-4 py-2 bg-[#D4AF37] text-white rounded hover:bg-[#B4941F]" // Update button color
               onClick={() => setShowAuthModal(false)} // Close modal on click
             >
               {t('navigation.login')} {/* Use translation key */}
             </Link>
             <Link
               to={`/register?redirect=${location.pathname}${location.search}`} // Redirect back after register
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700" // Keep register distinct, maybe gray?
               onClick={() => setShowAuthModal(false)} // Close modal on click
             >
               {t('navigation.register')} {/* Use translation key */}
@@ -351,7 +353,7 @@ const BookingPortal: React.FC = () => {
           </div>
         </div>
       </Modal>
-    </div>
+    </div> // This closes the outer bg-gray-50 div
   );
 };
 
