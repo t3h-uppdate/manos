@@ -1,9 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Phone, Mail, Clock } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { sendMessage } from '../lib/messageApi'; // Import the API function
 
 export const Contact = () => {
   const { t } = useTranslation();
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    const toastId = toast.loading(t('contact.form.sending'));
+
+    const success = await sendMessage({ name, phone, email, message });
+
+    setLoading(false);
+    if (success) {
+      toast.success(t('contact.form.success'), { id: toastId });
+      // Reset form
+      setName('');
+      setPhone('');
+      setEmail('');
+      setMessage('');
+    } else {
+      toast.error(t('contact.form.error'), { id: toastId });
+    }
+  };
 
   return (
     <div className="pt-16 min-h-screen bg-gray-50">
@@ -41,52 +68,68 @@ export const Contact = () => {
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow-md">
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {t('contact.form.name')}
+                <label htmlFor="contact-name" className="block text-sm font-medium text-gray-700">
+                  {t('contact.form.name')} <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="contact-name"
                   type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#D4AF37] focus:ring focus:ring-[#D4AF37] focus:ring-opacity-50"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label htmlFor="contact-phone" className="block text-sm font-medium text-gray-700">
                   {t('contact.form.phone')}
                 </label>
                 <input
+                  id="contact-phone"
                   type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#D4AF37] focus:ring focus:ring-[#D4AF37] focus:ring-opacity-50"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {t('contact.form.email')}
+                <label htmlFor="contact-email" className="block text-sm font-medium text-gray-700">
+                  {t('contact.form.email')} <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="contact-email"
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#D4AF37] focus:ring focus:ring-[#D4AF37] focus:ring-opacity-50"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {t('contact.form.message')}
+                <label htmlFor="contact-message" className="block text-sm font-medium text-gray-700">
+                  {t('contact.form.message')} <span className="text-red-500">*</span>
                 </label>
                 <textarea
+                  id="contact-message"
                   rows={4}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  required
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#D4AF37] focus:ring focus:ring-[#D4AF37] focus:ring-opacity-50"
                 ></textarea>
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-[#D4AF37] text-white px-4 py-2 rounded hover:bg-[#B4941F] transition"
+                disabled={loading}
+                className="w-full bg-[#D4AF37] text-white px-4 py-2 rounded hover:bg-[#B4941F] transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {t('contact.form.submit')}
+                {loading ? t('common.loading') : t('contact.form.submit')}
               </button>
             </form>
           </div>

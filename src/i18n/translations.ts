@@ -236,12 +236,24 @@ export const translations = {
       messages: { // Added messages section
         title: 'Messages',
         no_messages: 'No messages found.',
+        no_filtered_messages: 'No messages match the current filter.', // Added
+        confirm_delete: 'Are you sure you want to delete this message?',
+        deleting: 'Deleting message...',
+        filter_by_status: 'Filter by status', // Added
+        filter_options: { // Added
+          all: 'All Statuses'
+        },
+        view_modal: {
+          title: 'View Message'
+        },
         table: {
           from: 'From',
           email: 'Email',
+          phone: 'Phone', // Added
           snippet: 'Message Snippet',
           received: 'Received',
-          status: 'Status'
+          status: 'Status',
+          message: 'Message' // Added (for modal)
         },
         status: { // Message statuses
           unread: 'Unread',
@@ -254,12 +266,13 @@ export const translations = {
           // Add delete confirmation later if needed
         },
         notifications: {
-          status_updated: 'Message status updated to {{status}}.'
+          status_updated: 'Message status updated to {{status}}.',
+          deleted: 'Message deleted successfully.' // Added
         },
         errors: {
           fetch: 'Failed to fetch messages.',
-          update_status: 'Failed to update message status.'
-          // Add delete error later if needed
+          update_status: 'Failed to update message status.',
+          delete: 'Failed to delete message.' // Added
         }
       },
       settings: { // Added settings section
@@ -661,12 +674,24 @@ export const translations = {
       messages: { // Added messages section
         title: 'الرسائل',
         no_messages: 'لم يتم العثور على رسائل.',
+        no_filtered_messages: 'لا توجد رسائل تطابق الفلتر الحالي.', // Added
+        confirm_delete: 'هل أنت متأكد أنك تريد حذف هذه الرسالة؟',
+        deleting: 'جارٍ حذف الرسالة...',
+        filter_by_status: 'تصفية حسب الحالة', // Added
+        filter_options: { // Added
+          all: 'جميع الحالات'
+        },
+        view_modal: {
+          title: 'عرض الرسالة'
+        },
         table: {
           from: 'من',
           email: 'البريد الإلكتروني',
+          phone: 'الهاتف', // Added
           snippet: 'مقتطف الرسالة',
           received: 'تاريخ الاستلام',
-          status: 'الحالة'
+          status: 'الحالة',
+          message: 'الرسالة' // Added (for modal)
         },
         status: { // Message statuses
           unread: 'غير مقروءة',
@@ -679,12 +704,13 @@ export const translations = {
           // Add delete confirmation later if needed
         },
         notifications: {
-          status_updated: 'تم تحديث حالة الرسالة إلى {{status}}.'
+          status_updated: 'تم تحديث حالة الرسالة إلى {{status}}.',
+          deleted: 'تم حذف الرسالة بنجاح.' // Added
         },
         errors: {
           fetch: 'فشل في جلب الرسائل.',
-          update_status: 'فشل في تحديث حالة الرسالة.'
-          // Add delete error later if needed
+          update_status: 'فشل في تحديث حالة الرسالة.',
+          delete: 'فشل حذف الرسالة.' // Added
         }
       },
       settings: { // Added settings section
