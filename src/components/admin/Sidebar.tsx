@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom'; // Assuming react-router-dom is used for navigation
+import { Link, NavLink } from 'react-router-dom'; // Import NavLink
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 import {
   HomeIcon,
@@ -20,26 +20,32 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const { t } = useTranslation(); // Initialize useTranslation
-  // Basic styling, can be customized further with Tailwind
-  const baseLinkClasses = "flex items-center px-4 py-2 mt-2 text-gray-600 transition-colors duration-200 transform rounded-md hover:bg-gray-200 hover:text-gray-700";
-  const activeLinkClasses = "bg-gray-300 text-gray-800"; // Example active state
 
-  // TODO: Implement logic to determine the active link based on the current route
-  const isActive = (path: string) => window.location.pathname === path; // Simple example
+  // Enhanced styling for links
+  const baseLinkClasses = "flex items-center px-4 py-2 mt-2 text-gray-600 dark:text-gray-400 transition-colors duration-150 transform rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200";
+  // Using a subtle blue for active state, adjust color as needed
+  const activeLinkClasses = "bg-blue-100 dark:bg-gray-700 text-blue-700 dark:text-gray-100 font-semibold";
+
+  // NavLink className function to apply active styles
+  const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
+    `${baseLinkClasses} ${isActive ? activeLinkClasses : ''}`;
 
   return (
     <div
-      className={`fixed inset-y-0 left-0 z-30 w-64 px-4 py-5 overflow-y-auto bg-white border-r rtl:border-r-0 rtl:border-l dark:bg-gray-800 dark:border-gray-700 transform ${
+      className={`fixed inset-y-0 left-0 z-30 w-64 overflow-y-auto bg-white border-r rtl:border-r-0 rtl:border-l dark:bg-gray-800 dark:border-gray-700 transform ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
-      } transition-transform duration-200 ease-in-out md:relative md:translate-x-0`} // Responsive handling
+      } transition-transform duration-200 ease-in-out md:relative md:translate-x-0`} // Responsive handling, removed px-4 py-5 for finer control
     >
-      <div className="flex items-center justify-between">
-        <Link to="/admin" className="text-2xl font-semibold text-gray-800 dark:text-white">
+      {/* Sidebar Header */}
+      <div className="flex items-center justify-between px-4 py-5"> {/* Added padding back here */}
+        {/* Title/Logo Area */}
+        <Link to="/admin" className="text-xl font-bold text-gray-800 dark:text-white hover:text-gray-700 dark:hover:text-gray-300">
           {t('admin.sidebar.title')}
         </Link>
-        {/* Button to close sidebar on mobile - Icon only, no text to translate */}
+
+        {/* Mobile Close Button */}
         <button
-          onClick={toggleSidebar}
+          onClick={toggleSidebar} // Keep toggle functionality
           className="text-gray-600 dark:text-gray-400 focus:outline-none md:hidden"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -48,55 +54,56 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         </button>
       </div>
 
-      <nav className="mt-10">
-        <Link to="/admin" className={`${baseLinkClasses} ${isActive('/admin') ? activeLinkClasses : ''}`}>
+      {/* Navigation Links */}
+      <nav className="px-4 mt-6"> {/* Adjusted margin-top and added padding */}
+        {/* Use NavLink for automatic active class handling */}
+        {/* Added 'end' prop to dashboard link to prevent matching sub-routes */}
+        <NavLink to="/admin" className={getNavLinkClass} end>
           <HomeIcon className="w-5 h-5" />
           <span className="mx-4 font-medium">{t('admin.sidebar.dashboard')}</span>
-        </Link>
+        </NavLink>
 
-        <Link to="/admin/calendar" className={`${baseLinkClasses} ${isActive('/admin/calendar') ? activeLinkClasses : ''}`}>
+        <NavLink to="/admin/calendar" className={getNavLinkClass}>
           <CalendarIcon className="w-5 h-5" />
           <span className="mx-4 font-medium">{t('admin.sidebar.calendar')}</span>
-        </Link>
+        </NavLink>
 
-        <Link to="/admin/bookings" className={`${baseLinkClasses} ${isActive('/admin/bookings') ? activeLinkClasses : ''}`}>
+        <NavLink to="/admin/bookings" className={getNavLinkClass}>
           <BriefcaseIcon className="w-5 h-5" />
           <span className="mx-4 font-medium">{t('admin.sidebar.bookings')}</span>
-        </Link>
+        </NavLink>
 
-        <Link to="/admin/customers" className={`${baseLinkClasses} ${isActive('/admin/customers') ? activeLinkClasses : ''}`}>
+        <NavLink to="/admin/customers" className={getNavLinkClass}>
           <UsersIcon className="w-5 h-5" />
           <span className="mx-4 font-medium">{t('admin.sidebar.customers')}</span>
-        </Link>
+        </NavLink>
 
-        <Link to="/admin/inventory" className={`${baseLinkClasses} ${isActive('/admin/inventory') ? activeLinkClasses : ''}`}>
+        <NavLink to="/admin/inventory" className={getNavLinkClass}>
           <ArchiveBoxIcon className="w-5 h-5" />
           <span className="mx-4 font-medium">{t('admin.sidebar.inventory')}</span>
-        </Link>
+        </NavLink>
 
-        {/* TODO: Add translation key for 'admin.sidebar.services' */}
-        <Link to="/admin/services" className={`${baseLinkClasses} ${isActive('/admin/services') ? activeLinkClasses : ''}`}>
+        <NavLink to="/admin/services" className={getNavLinkClass}>
           <ScissorsIcon className="w-5 h-5" />
-           <span className="mx-4 font-medium">{t('admin.sidebar.services', 'Services')}</span>
-         </Link>
+           <span className="mx-4 font-medium">{t('admin.sidebar.services')}</span>
+         </NavLink>
 
-         {/* TODO: Add translation key for 'admin.sidebar.staff' */}
-         <Link to="/admin/staff" className={`${baseLinkClasses} ${isActive('/admin/staff') ? activeLinkClasses : ''}`}>
+         <NavLink to="/admin/staff" className={getNavLinkClass}>
            <UserGroupIcon className="w-5 h-5" />
-           <span className="mx-4 font-medium">{t('admin.sidebar.staff', 'Staff')}</span>
-         </Link>
+           <span className="mx-4 font-medium">{t('admin.sidebar.staff')}</span>
+         </NavLink>
 
-         <Link to="/admin/messages" className={`${baseLinkClasses} ${isActive('/admin/messages') ? activeLinkClasses : ''}`}>
+         <NavLink to="/admin/messages" className={getNavLinkClass}>
            <InboxIcon className="w-5 h-5" />
            <span className="mx-4 font-medium">{t('admin.sidebar.messages')}</span>
-        </Link>
+        </NavLink>
 
         <hr className="my-6 border-gray-200 dark:border-gray-600" />
 
-        <Link to="/admin/settings" className={`${baseLinkClasses} ${isActive('/admin/settings') ? activeLinkClasses : ''}`}>
+        <NavLink to="/admin/settings" className={getNavLinkClass}>
           <CogIcon className="w-5 h-5" />
           <span className="mx-4 font-medium">{t('admin.sidebar.settings')}</span>
-        </Link>
+        </NavLink>
       </nav>
     </div>
   );

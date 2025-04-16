@@ -13,35 +13,38 @@ export interface Customer {
 
 // Input data for finding/creating
 interface CustomerInput {
+    authUserId: string; // Added Supabase Auth User ID
     name: string;
     email: string;
     phone?: string | null;
 }
 
 /**
- * Finds a customer by email. If not found, creates a new customer.
- * Returns the customer's ID.
- * @param customerData - Object containing name, email, and optional phone.
+ * Finds a customer by email or authUserId. If not found, creates a new customer.
+ * Returns the customer's ID (from the 'customers' table).
+ * @param customerData - Object containing authUserId, name, email, and optional phone.
  * @returns The UUID string ID of the found or newly created customer.
  */
 export const findOrCreateCustomer = async (customerData: CustomerInput): Promise<string> => {
+    const authUserId = customerData.authUserId;
     const email = customerData.email.toLowerCase().trim();
     const name = customerData.name.trim();
     const phone = customerData.phone?.trim() || null;
 
-    if (!email || !name) {
-        throw new Error('Customer name and email are required.');
+    if (!authUserId || !email || !name) {
+        throw new Error('Auth User ID, Customer name and email are required.');
     }
 
-    // 1. Check if customer exists by email
+    // 1. Check if customer exists by auth_user_id OR email (prefer auth_user_id)
     const { data: existingCustomer, error: findError } = await supabase
         .from('customers')
         .select('id')
-        .eq('email', email)
-        .maybeSingle(); // Use maybeSingle to handle 0 or 1 result without error
+        .or(`auth_user_id.eq.${authUserId},email.eq.${email}`) // Check both fields
+        .limit(1) // Ensure we only get one if both match somehow
+        .maybeSingle(); // Use maybeSingle to handle 0 or 1 result
 
     if (findError) {
-        console.error('Error finding customer:', findError);
+        console.error('Error finding customer by authId or email:', findError);
         throw new Error(`Failed to check for existing customer: ${findError.message}`);
     }
 
@@ -57,6 +60,7 @@ export const findOrCreateCustomer = async (customerData: CustomerInput): Promise
         .from('customers')
         .insert([
             {
+                auth_user_id: authUserId, // Include auth_user_id
                 name: name,
                 email: email,
                 phone: phone,

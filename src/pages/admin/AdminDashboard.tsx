@@ -55,6 +55,20 @@ const AdminDashboard: React.FC = () => {
     return count;
   };
 
+  // Skeleton Card Component
+  const SkeletonStatCard: React.FC = () => (
+    <div className="bg-white p-6 rounded-lg shadow-sm animate-pulse">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="h-5 bg-gray-200 rounded w-3/4 mb-3"></div> {/* Skeleton for title */}
+          <div className="h-8 bg-gray-300 rounded w-1/2"></div> {/* Skeleton for count */}
+        </div>
+        <div className="h-6 w-6 bg-gray-300 rounded-full"></div> {/* Skeleton for icon */}
+      </div>
+    </div>
+  );
+
+
   const StatCard: React.FC<{
     title: string;
     count: number | null;
@@ -97,30 +111,41 @@ const AdminDashboard: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title={t('admin.dashboard.card.bookings_today')}
-          count={counts.bookingsToday}
-          icon={<Calendar size={24} />}
-          to="/admin/bookings"
-        />
-        <StatCard
-          title={t('admin.dashboard.card.upcoming_appointments_24h')}
-          count={counts.upcomingAppointments24h}
-          icon={<Clock size={24} />}
-          to="/admin/calendar"
-        />
-        <StatCard
-          title={t('admin.dashboard.card.total_customers')}
-          count={counts.totalCustomers}
-          icon={<Users size={24} />}
-          to="/admin/customers"
-        />
-        <StatCard
-          title={t('admin.dashboard.card.new_messages')}
-          count={counts.newMessages}
-          icon={<MessageSquare size={24} />}
-          to="/admin/messages"
-        />
+        {loading ? (
+          <>
+            <SkeletonStatCard />
+            <SkeletonStatCard />
+            <SkeletonStatCard />
+            <SkeletonStatCard />
+          </>
+        ) : (
+          <>
+            <StatCard
+              title={t('admin.dashboard.card.bookings_today')}
+              count={counts.bookingsToday}
+              icon={<Calendar size={24} />}
+              to="/admin/bookings"
+            />
+            <StatCard
+              title={t('admin.dashboard.card.upcoming_appointments_24h')}
+              count={counts.upcomingAppointments24h}
+              icon={<Clock size={24} />}
+              to="/admin/calendar"
+            />
+            <StatCard
+              title={t('admin.dashboard.card.total_customers')}
+              count={counts.totalCustomers}
+              icon={<Users size={24} />}
+              to="/admin/customers"
+            />
+            <StatCard
+              title={t('admin.dashboard.card.new_messages')}
+              count={counts.newMessages}
+              icon={<MessageSquare size={24} />}
+              to="/admin/messages"
+            />
+          </>
+        )}
       </div>
 
       <div className="mt-8">

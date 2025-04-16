@@ -84,8 +84,30 @@ export const createBooking = async (bookingData: NewBookingData): Promise<Bookin
     staff?: { name: string } | null; // Join staff name
  }
 
- // Function to fetch bookings for a specific customer ID
- export const fetchBookingsByCustomerId = async (customerId: string): Promise<DetailedBooking[]> => { // Changed customerId to string
+ // Function to fetch bookings for a specific AUTHENTICATED user ID
+ export const fetchBookingsByCustomerId = async (authUserId: string): Promise<DetailedBooking[]> => {
+    // 1. Find the customer record linked to the authenticated user
+    const { data: customer, error: customerError } = await supabase
+        .from('customers')
+        .select('id') // Select the primary key of the customers table
+        .eq('auth_user_id', authUserId) // Match based on the Supabase Auth User ID
+        .maybeSingle();
+
+    if (customerError) {
+        console.error('Error finding customer by auth ID:', customerError);
+        throw new Error('Failed to identify customer record.');
+    }
+
+    // If no customer record is linked to this auth user, they have no bookings under this system
+    if (!customer) {
+        console.log(`No customer record found for auth_user_id: ${authUserId}`);
+        return []; // Return empty array, no bookings possible
+    }
+
+    const customerTableId = customer.id; // This is the ID from the 'customers' table
+
+    // 2. Fetch bookings using the customer's table ID
+    console.log(`Fetching bookings for customer table ID: ${customerTableId}`);
     const { data, error } = await supabase
       .from('bookings')
       .select(`
@@ -93,11 +115,11 @@ export const createBooking = async (bookingData: NewBookingData): Promise<Bookin
         services ( name ),
         staff ( name )
       `)
-      .eq('customer_id', customerId)
+      .eq('customer_id', customerTableId) // Query using the ID from the 'customers' table
       .order('start_time', { ascending: false }); // Order by most recent first
 
     if (error) {
-      console.error('Error fetching customer bookings:', error);
+      console.error(`Error fetching bookings for customer ID ${customerTableId}:`, error);
       throw new Error('Failed to fetch your bookings.');
     }
 

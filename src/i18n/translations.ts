@@ -5,7 +5,11 @@ export const translations = {
       about: 'About Us',
       contact: 'Contact Us',
       findUs: 'Find Us',
-      my_bookings: 'My Bookings' // Added
+      book_now: 'Book Now', // Added
+      my_bookings: 'My Bookings',
+      login: 'Login', // Added
+      register: 'Register', // Added
+      logout: 'Logout' // Added
     },
     home: {
       welcome: 'Welcome to Manos Barber Shop',
@@ -138,6 +142,10 @@ export const translations = {
           bookings_today: "Today's Bookings",
           total_customers: 'Total Customers',
           new_messages: 'New Messages'
+        },
+        charts: { // Added charts subsection
+          bookings_over_time: 'Bookings Over Time',
+          bookings_trend: 'Bookings'
         },
         errors: {
           fetch: 'Failed to fetch summary data.'
@@ -422,7 +430,11 @@ export const translations = {
       about: 'من نحن',
       contact: 'اتصل بنا',
       findUs: 'موقعنا',
-      my_bookings: 'حجوزاتي' // Added
+      book_now: 'احجز الآن', // Added
+      my_bookings: 'حجوزاتي',
+      login: 'تسجيل الدخول', // Added
+      register: 'تسجيل', // Added
+      logout: 'تسجيل الخروج' // Added
     },
     home: {
       welcome: 'مرحباً بكم في صالون مانوس',
@@ -555,6 +567,10 @@ export const translations = {
           bookings_today: "حجوزات اليوم",
           total_customers: 'إجمالي العملاء',
           new_messages: 'رسائل جديدة'
+        },
+        charts: { // Added charts subsection
+          bookings_over_time: 'الحجوزات عبر الوقت',
+          bookings_trend: 'الحجوزات'
         },
         errors: {
           fetch: 'فشل في جلب بيانات الملخص.'

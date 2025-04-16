@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
+import { Link, NavLink, useNavigate } from 'react-router-dom'; // Import NavLink
 import { useTranslation } from 'react-i18next';
 import { Menu, Globe, LogOut } from 'lucide-react'; // Import LogOut icon
 import { useAuth } from '../hooks/useAuth'; // Corrected import path
@@ -27,46 +27,55 @@ export const Navbar = () => {
     setIsMenuOpen(false);
   };
 
+  // Define NavLink classes
+  const baseNavLinkClass = "text-gray-700 hover:text-gold-600 transition-colors duration-150";
+  const activeNavLinkClass = "text-gold-600 font-semibold"; // Style for active link
+
+  const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
+    `${baseNavLinkClass} ${isActive ? activeNavLinkClass : ''}`;
+
+
   return (
-    <nav className="fixed w-full bg-white/90 backdrop-blur-sm z-50">
+    <nav className="fixed w-full bg-white/90 backdrop-blur-sm z-50 shadow-sm"> {/* Added subtle shadow */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <Link to="/" className="text-2xl font-serif text-gray-900">Manos</Link>
 
+          {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="text-gray-700 hover:text-gold-600">{t('navigation.home')}</Link>
-            <Link to="/about" className="text-gray-700 hover:text-gold-600">{t('navigation.about')}</Link>
-            {/* TODO: Add i18n key for Book Now */}
-            <Link to="/book" className="text-gray-700 hover:text-gold-600">Book Now</Link>
-            <Link to="/contact" className="text-gray-700 hover:text-gold-600">{t('navigation.contact')}</Link>
-            <button
-              className="bg-[#D4AF37] text-white px-4 py-2 rounded hover:bg-[#B4941F] transition"
+            <NavLink to="/" className={getNavLinkClass} end>{t('navigation.home')}</NavLink>
+            <NavLink to="/about" className={getNavLinkClass}>{t('navigation.about')}</NavLink>
+            <NavLink to="/book" className={getNavLinkClass}>{t('navigation.book_now')}</NavLink> {/* Use translation */}
+            <NavLink to="/contact" className={getNavLinkClass}>{t('navigation.contact')}</NavLink>
+            {/* Find Us Button - Assuming it links to contact for now */}
+            <Link
+              to="/contact#find-us" // Example: Link to a section in contact page
+              className="bg-gold-600 text-white px-4 py-2 rounded hover:bg-gold-700 transition" // Use theme colors
             >
               {t('navigation.findUs')}
-            </button>
+            </Link> {/* Corrected closing tag */}
 
             {/* Conditional Auth Links */}
             {!loading && ( // Don't show links until auth state is loaded
                user ? (
                  <>
                    {/* Display user info (e.g., email) - can be enhanced */}
-                   <span className="text-gray-700 text-sm hidden lg:block">{user.email}</span>
-                   {/* TODO: Add i18n key for My Bookings */}
-                   <Link to="/my-bookings" className="text-gray-700 hover:text-gold-600">My Bookings</Link>
+                   <span className="text-gray-700 text-sm hidden lg:block" title={user.email}>{user.email?.split('@')[0]}</span> {/* Show partial email */}
+                   <NavLink to="/my-bookings" className={getNavLinkClass}>{t('navigation.my_bookings')}</NavLink> {/* Use translation */}
                    <button
                      onClick={handleLogout}
                      className="flex items-center text-gray-700 hover:text-gold-600"
-                    title="Logout"
-                  >
-                    <LogOut className="w-5 h-5 mr-1" /> Logout
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link to="/login" className="text-gray-700 hover:text-gold-600">Login</Link>
-                  <Link to="/register" className="text-gray-700 hover:text-gold-600">Register</Link>
-                </>
-              )
+                     title={t('navigation.logout')} // Use translation for title
+                   >
+                     <LogOut className="w-5 h-5 mr-1" /> {t('navigation.logout')} {/* Use translation */}
+                   </button>
+                 </>
+               ) : (
+                 <>
+                   <NavLink to="/login" className={getNavLinkClass}>{t('navigation.login')}</NavLink>
+                   <NavLink to="/register" className={getNavLinkClass}>{t('navigation.register')}</NavLink>
+                 </>
+               )
             )}
             {/* End Conditional Auth Links */}
 
@@ -85,30 +94,30 @@ export const Navbar = () => {
 
         {isMenuOpen && (
           <div className="md:hidden">
+            {/* Mobile Menu */}
             <div className="px-2 pt-2 pb-3 space-y-1">
-              <Link to="/" onClick={handleMobileLinkClick} className="block px-3 py-2 text-gray-700">{t('navigation.home')}</Link>
-              <Link to="/about" onClick={handleMobileLinkClick} className="block px-3 py-2 text-gray-700">{t('navigation.about')}</Link>
-              {/* TODO: Add i18n key for Book Now */}
-              <Link to="/book" onClick={handleMobileLinkClick} className="block px-3 py-2 text-gray-700">Book Now</Link>
-              <Link to="/contact" onClick={handleMobileLinkClick} className="block px-3 py-2 text-gray-700">{t('navigation.contact')}</Link>
+                {/* Use NavLink for mobile too */}
+              <NavLink to="/" onClick={handleMobileLinkClick} className={({isActive}) => `block px-3 py-2 rounded-md text-base font-medium ${isActive ? 'bg-gold-50 text-gold-700' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'}`} end>{t('navigation.home')}</NavLink>
+              <NavLink to="/about" onClick={handleMobileLinkClick} className={({isActive}) => `block px-3 py-2 rounded-md text-base font-medium ${isActive ? 'bg-gold-50 text-gold-700' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'}`}>{t('navigation.about')}</NavLink>
+              <NavLink to="/book" onClick={handleMobileLinkClick} className={({isActive}) => `block px-3 py-2 rounded-md text-base font-medium ${isActive ? 'bg-gold-50 text-gold-700' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'}`}>{t('navigation.book_now')}</NavLink> {/* Use translation */}
+              <NavLink to="/contact" onClick={handleMobileLinkClick} className={({isActive}) => `block px-3 py-2 rounded-md text-base font-medium ${isActive ? 'bg-gold-50 text-gold-700' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'}`}>{t('navigation.contact')}</NavLink>
 
               {/* Conditional Auth Links (Mobile) */}
               {!loading && (
                  user ? (
                     <>
-                      {/* TODO: Add i18n key for My Bookings */}
-                      <Link to="/my-bookings" onClick={handleMobileLinkClick} className="block px-3 py-2 text-gray-700">My Bookings</Link>
+                      <NavLink to="/my-bookings" onClick={handleMobileLinkClick} className={({isActive}) => `block px-3 py-2 rounded-md text-base font-medium ${isActive ? 'bg-gold-50 text-gold-700' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'}`}>{t('navigation.my_bookings')}</NavLink> {/* Use translation */}
                       <button
                         onClick={() => { handleLogout(); handleMobileLinkClick(); }}
-                        className="block w-full text-left px-3 py-2 text-gray-700"
+                        className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                       >
-                        Logout ({user.email?.split('@')[0]}) {/* Show partial email */}
+                        {t('navigation.logout')} ({user.email?.split('@')[0]}) {/* Use translation */}
                       </button>
                     </>
                   ) : (
                     <>
-                      <Link to="/login" onClick={handleMobileLinkClick} className="block px-3 py-2 text-gray-700">Login</Link>
-                      <Link to="/register" onClick={handleMobileLinkClick} className="block px-3 py-2 text-gray-700">Register</Link>
+                      <NavLink to="/login" onClick={handleMobileLinkClick} className={({isActive}) => `block px-3 py-2 rounded-md text-base font-medium ${isActive ? 'bg-gold-50 text-gold-700' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'}`}>{t('navigation.login')}</NavLink>
+                      <NavLink to="/register" onClick={handleMobileLinkClick} className={({isActive}) => `block px-3 py-2 rounded-md text-base font-medium ${isActive ? 'bg-gold-50 text-gold-700' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'}`}>{t('navigation.register')}</NavLink>
                     </>
                   )
               )}

@@ -107,7 +107,13 @@ const BookingPortal: React.FC = () => {
       // 1. Find or Create Customer using logged-in user's details
       const customerName = user.user_metadata?.full_name || user.email.split('@')[0]; // Example fallback
 
+      // Ensure user is non-null here (already checked at function start)
+      if (!user) {
+          throw new Error("User is not authenticated."); // Should not happen
+      }
+
       const customerId = await findOrCreateCustomer({
+          authUserId: user.id, // Pass the Supabase Auth User ID
           name: customerName, // Use name from auth or fallback
           email: user.email, // Use email from auth user
           phone: clientPhone || null, // Use phone from state
@@ -121,7 +127,7 @@ const BookingPortal: React.FC = () => {
       const bookingData: NewBookingData = {
         service_id: null, // Set service_id to null
         staff_id: null, // Set staff_id to null for simplified booking
-        customer_id: customerId, // Use the retrieved/created customer ID
+        customer_id: customerId, // Use the retrieved/created customer ID from findOrCreateCustomer
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
         message: clientMessage.trim(), // Include the client's message

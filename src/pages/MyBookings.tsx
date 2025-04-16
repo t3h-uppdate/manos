@@ -11,7 +11,8 @@ import { useAuth } from '../hooks/useAuth'; // Corrected import path
 const MyBookings: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth(); // Use AuthContext
-  const [bookings, setBookings] = useState<DetailedBooking[]>([]); // Use DetailedBooking type
+  const [upcomingBookings, setUpcomingBookings] = useState<DetailedBooking[]>([]);
+  const [pastBookings, setPastBookings] = useState<DetailedBooking[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,8 +36,20 @@ const MyBookings: React.FC = () => {
       // We might need to adjust fetchBookingsByCustomerId if the customer_id column type is different (e.g., integer)
       // For now, assuming it expects the user ID directly.
       // If customer_id in bookings *is* the auth user ID (UUID string) for now.
-      const data = await fetchBookingsByCustomerId(customerId); // Use actual API call - Removed 'as any' cast
-      setBookings(data); // Use actual data
+      const allBookings = await fetchBookingsByCustomerId(customerId); // Use actual API call - Removed 'as any' cast
+
+      // Filter bookings into upcoming and past
+      const now = new Date();
+      const upcoming = allBookings
+        .filter(b => new Date(b.end_time) >= now)
+        .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()); // Ascending for upcoming
+      const past = allBookings
+        .filter(b => new Date(b.end_time) < now)
+        .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()); // Descending for past
+
+      setUpcomingBookings(upcoming);
+      setPastBookings(past);
+
     } catch (err: unknown) { // Use unknown for catch block
       const message = t('my_bookings.errors.load_failed', 'Failed to load your bookings.'); // TODO: Add translation
       setError(message);
@@ -68,36 +81,58 @@ const MyBookings: React.FC = () => {
   if (loading) return <div className="container mx-auto px-4 py-8">{t('common.loading')}</div>;
   if (error) return <div className="container mx-auto px-4 py-8 text-red-600">{error}</div>;
 
+  // Helper component for rendering a single booking card
+  const BookingCard: React.FC<{ booking: DetailedBooking }> = ({ booking }) => (
+    <div key={booking.id} className="bg-white shadow-md rounded-lg p-4 border border-gray-200">
+      {/* Use joined service name */}
+      <h2 className="text-xl font-semibold text-indigo-700 mb-2">{booking.services?.name || t('my_bookings.unknown_service', 'Service Details Unavailable')}</h2> {/* TODO: Add translation */}
+      <p className="text-gray-700">
+        <span className="font-medium">{t('my_bookings.labels.time', 'Time')}:</span> {formatDateTime(booking.start_time)} - {formatDateTime(booking.end_time).split(', ')[1]} {/* Show only time for end */}
+      </p>
+      {/* Display staff if available */}
+      {booking.staff?.name && (
+        <p className="text-gray-700">
+          <span className="font-medium">{t('my_bookings.labels.staff', 'With')}:</span> {booking.staff.name} {/* TODO: Add translation */}
+        </p>
+      )}
+      <p className="text-gray-700">
+        <span className="font-medium">{t('my_bookings.labels.status', 'Status')}:</span> {booking.status} {/* TODO: Consider translating status */}
+      </p>
+      {/* TODO: Add Cancel/Reschedule buttons for future bookings? */}
+    </div>
+  );
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-semibold text-gray-800 mb-6">{t('my_bookings.title', 'My Bookings')}</h1> {/* TODO: Add translation */}
 
-      {bookings.length === 0 ? (
+      {upcomingBookings.length === 0 && pastBookings.length === 0 ? (
         <p className="text-gray-600">{t('my_bookings.no_bookings', 'You have no upcoming or past bookings.')}</p> // TODO: Add translation
       ) : (
-        <div className="space-y-4">
-          {bookings
-            // Sort descending by start time (most recent first)
-            .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
-            .map((booking) => (
-            <div key={booking.id} className="bg-white shadow-md rounded-lg p-4 border border-gray-200">
-              {/* Use joined service name */}
-              <h2 className="text-xl font-semibold text-indigo-700 mb-2">{booking.services?.name || t('my_bookings.unknown_service', 'Service Details Unavailable')}</h2> {/* TODO: Add translation */}
-              <p className="text-gray-700">
-                <span className="font-medium">{t('my_bookings.labels.time', 'Time')}:</span> {formatDateTime(booking.start_time)} - {formatDateTime(booking.end_time).split(', ')[1]} {/* Show only time for end */}
-              </p>
-              {/* Display staff if available */}
-              {booking.staff?.name && (
-                <p className="text-gray-700">
-                  <span className="font-medium">{t('my_bookings.labels.staff', 'With')}:</span> {booking.staff.name} {/* TODO: Add translation */}
-                </p>
-              )}
-              <p className="text-gray-700">
-                <span className="font-medium">{t('my_bookings.labels.status', 'Status')}:</span> {booking.status} {/* TODO: Consider translating status */}
-              </p>
-              {/* TODO: Add Cancel/Reschedule buttons for future bookings? */}
-            </div>
-          ))}
+        <div className="space-y-8">
+          {/* Upcoming Bookings Section */}
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4">{t('my_bookings.upcoming_title', 'Upcoming Bookings')}</h2> {/* TODO: Add translation */}
+            {upcomingBookings.length > 0 ? (
+              <div className="space-y-4">
+                {upcomingBookings.map((booking) => <BookingCard key={booking.id} booking={booking} />)}
+              </div>
+            ) : (
+              <p className="text-gray-500">{t('my_bookings.no_upcoming', 'You have no upcoming bookings.')}</p> // TODO: Add translation
+            )}
+          </div>
+
+          {/* Past Bookings Section */}
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4">{t('my_bookings.past_title', 'Past Bookings')}</h2> {/* TODO: Add translation */}
+            {pastBookings.length > 0 ? (
+              <div className="space-y-4">
+                {pastBookings.map((booking) => <BookingCard key={booking.id} booking={booking} />)}
+              </div>
+            ) : (
+              <p className="text-gray-500">{t('my_bookings.no_past', 'You have no past bookings.')}</p> // TODO: Add translation
+            )}
+          </div>
         </div>
       )}
     </div>

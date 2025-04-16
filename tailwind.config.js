@@ -8,7 +8,9 @@ export default {
       },
       colors: {
         gold: {
-          600: '#D4AF37',
+          50: '#FFFBEB',  // Added very light gold for mobile active bg
+          600: '#D4AF37', // Existing gold color
+          700: '#B4941F', // Added darker gold for hover
         },
       },
     },
