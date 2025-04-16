@@ -152,7 +152,7 @@ export const Navbar = () => {
                           <NavLink to="/my-bookings" onClick={handleMobileLinkClick} className={getMobileNavLinkClass}>{t('navigation.my_bookings')}</NavLink>
                           {/* Conditionally render Admin Dashboard link (Mobile) */}
                           {isAdmin && (
-                            <NavLink to="/admin/dashboard" onClick={handleMobileLinkClick} className={getMobileNavLinkClass}>{t('navigation.adminDashboard')}</NavLink>
+                            <NavLink to="/admin/" onClick={handleMobileLinkClick} className={getMobileNavLinkClass}>{t('navigation.adminDashboard')}</NavLink>
                           )}
                           <button
                             onClick={() => { handleLogout(); handleMobileLinkClick(); }}
