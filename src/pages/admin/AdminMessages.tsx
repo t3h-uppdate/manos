@@ -35,6 +35,7 @@ const AdminMessages: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // Or make this configurable later
+  const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set()); // State for expanded messages
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -68,10 +69,8 @@ const AdminMessages: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Fetch only once on mount
 
-  // TODO: Implement function to mark message as read/unread/archive
   const handleStatusChange = async (messageId: string, newStatus: string) => {
     console.log(`Changing status of ${messageId} to ${newStatus}`);
-    // Implementation needed: Update Supabase and refresh state
      try {
         const { error } = await supabase
             .from('messages')
@@ -85,7 +84,6 @@ const AdminMessages: React.FC = () => {
         toast.success(t('admin.messages.notifications.status_updated', { status: newStatus }));
     } catch (err: unknown) {
         console.error("Error updating message status:", err);
-        // Type guard for error message (optional, as we show a generic toast)
         let errorDetails = '';
         if (err instanceof Error) {
           errorDetails = err.message;
@@ -95,6 +93,19 @@ const AdminMessages: React.FC = () => {
         console.error("Update error details:", errorDetails); // Log details
         toast.error(t('admin.messages.errors.update_status'));
     }
+  };
+
+  // Function to toggle message expansion
+  const toggleMessageExpansion = (messageId: string) => {
+    setExpandedMessages(prevExpanded => {
+      const newExpanded = new Set(prevExpanded);
+      if (newExpanded.has(messageId)) {
+        newExpanded.delete(messageId);
+      } else {
+        newExpanded.add(messageId);
+      }
+      return newExpanded;
+    });
   };
 
   // Memoized filtered and sorted messages
@@ -112,18 +123,15 @@ const AdminMessages: React.FC = () => {
         const aValue = a[sortColumn];
         const bValue = b[sortColumn];
 
-        // Handle null/undefined values and different types
         if (aValue === null || aValue === undefined) return sortDirection === 'asc' ? -1 : 1;
         if (bValue === null || bValue === undefined) return sortDirection === 'asc' ? 1 : -1;
 
         if (typeof aValue === 'string' && typeof bValue === 'string') {
-          // Case-insensitive string comparison
           const comparison = aValue.toLowerCase().localeCompare(bValue.toLowerCase());
           return sortDirection === 'asc' ? comparison : -comparison;
         } else if (typeof aValue === 'number' && typeof bValue === 'number') {
           return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
         } else {
-           // Fallback for other types (like dates treated as strings)
            const comparison = String(aValue).localeCompare(String(bValue));
            return sortDirection === 'asc' ? comparison : -comparison;
         }
@@ -156,10 +164,8 @@ const AdminMessages: React.FC = () => {
   // Function to handle sorting
   const handleSort = (column: keyof Message) => {
     if (sortColumn === column) {
-      // Toggle direction if same column is clicked
       setSortDirection(prevDirection => prevDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      // Set new column and default to ascending
       setSortColumn(column);
       setSortDirection('asc');
     }
@@ -173,9 +179,8 @@ const AdminMessages: React.FC = () => {
 
   // Function to handle deleting a message
   const handleDelete = async (messageId: string) => {
-    // Confirmation dialog
     if (!window.confirm(t('admin.messages.confirm_delete'))) {
-      return; // Abort if user cancels
+      return;
     }
 
     const toastId = toast.loading(t('admin.messages.deleting'));
@@ -187,7 +192,6 @@ const AdminMessages: React.FC = () => {
 
       if (deleteError) throw deleteError;
 
-      // Remove message from local state (allMessages)
       setAllMessages(prevMessages => prevMessages.filter(msg => msg.id !== messageId));
       toast.success(t('admin.messages.notifications.deleted'), { id: toastId });
 
@@ -218,7 +222,7 @@ const AdminMessages: React.FC = () => {
       <div className="mb-4 flex justify-end">
          <div className="flex items-center space-x-2">
            <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">
-             {t('admin.messages.filter_by_status')}: {/* TODO: Add translation */}
+             {t('admin.messages.filter_by_status')}:
            </label>
            <select
              id="status-filter"
@@ -226,7 +230,7 @@ const AdminMessages: React.FC = () => {
              onChange={(e) => setFilterStatus(e.target.value)}
              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
            >
-             <option value="all">{t('admin.messages.filter_options.all')}</option> {/* TODO: Add translation */}
+             <option value="all">{t('admin.messages.filter_options.all')}</option>
              <option value="unread">{t('admin.messages.status.unread')}</option>
              <option value="read">{t('admin.messages.status.read')}</option>
              <option value="archived">{t('admin.messages.status.archived')}</option>
@@ -239,64 +243,65 @@ const AdminMessages: React.FC = () => {
       {error && <p className="text-red-600 bg-red-100 p-3 rounded mb-4">{error}</p>}
 
       {!loading && !error && (
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('name')}>
-                  {t('admin.messages.table.from')} {renderSortIcon('name')}
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('email')}>
-                  {t('admin.messages.table.email')} {renderSortIcon('email')}
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('phone')}>
-                  {t('admin.messages.table.phone')} {renderSortIcon('phone')}
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> {/* Snippet not sortable */}
-                  {t('admin.messages.table.snippet')}
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('created_at')}>
-                  {t('admin.messages.table.received')} {renderSortIcon('created_at')}
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('status')}>
-                  {t('admin.messages.table.status')} {renderSortIcon('status')}
-                </th>
-                <th scope="col" className="relative px-6 py-3">
-                  <span className="sr-only">{t('common.actions')}</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {paginatedMessages.length === 0 ? ( // Use paginatedMessages
-                <tr>
-                  <td colSpan={7} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                    {filterStatus === 'all' ? t('admin.messages.no_messages') : t('admin.messages.no_filtered_messages')}
-                  </td>
-                </tr>
-              ) : (
-                paginatedMessages.map((message) => ( // Use paginatedMessages
-                  <tr key={message.id} className={`${message.status === 'unread' ? 'bg-yellow-50' : ''} hover:bg-gray-50`}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{message.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{message.email || t('common.not_available')}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{message.phone || t('common.not_available')}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{message.message}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(message.created_at)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{t(`admin.messages.status.${message.status}`)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
-                      <button onClick={() => handleView(message)} className="text-indigo-600 hover:text-indigo-900">{t('common.view')}</button>
-                      {message.status === 'unread' ? (
-                         <button onClick={() => handleStatusChange(message.id, 'read')} className="text-green-600 hover:text-green-900">{t('admin.messages.actions.mark_read')}</button>
-                      ) : (
-                         <button onClick={() => handleStatusChange(message.id, 'unread')} className="text-yellow-600 hover:text-yellow-900">{t('admin.messages.actions.mark_unread')}</button>
-                      )}
-                      <button onClick={() => handleDelete(message.id)} className="text-red-600 hover:text-red-900">{t('common.delete')}</button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <>
+          {/* Card View (All screens) */}
+          <div className="space-y-4">
+            {paginatedMessages.length === 0 ? (
+               <div className="bg-white shadow-md rounded-lg p-4 text-center text-gray-500">
+                 {filterStatus === 'all' ? t('admin.messages.no_messages') : t('admin.messages.no_filtered_messages')}
+               </div>
+             ) : (
+              paginatedMessages.map((message) => (
+                <div key={message.id} className={`bg-white shadow-md rounded-lg p-4 ${message.status === 'unread' ? 'border-l-4 border-yellow-400' : ''}`}>
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-lg font-semibold text-gray-900">{message.name}</span>
+                    <span className={`text-sm font-medium px-2 py-0.5 rounded-full capitalize ${
+                      message.status === 'unread' ? 'bg-yellow-100 text-yellow-800' :
+                      message.status === 'read' ? 'bg-green-100 text-green-800' :
+                      message.status === 'archived' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {t(`admin.messages.status.${message.status}`)}
+                    </span>
+                  </div>
+                  {message.email && (
+                    <p className="text-sm text-gray-600 mb-1">
+                      <span className="font-medium">{t('admin.messages.table.email')}:</span> {message.email}
+                    </p>
+                  )}
+                  {message.phone && (
+                    <p className="text-sm text-gray-600 mb-1">
+                      <span className="font-medium">{t('admin.messages.table.phone')}:</span> {message.phone}
+                    </p>
+                  )}
+                   <p className="text-sm text-gray-600 mb-2">
+                      <span className="font-medium">{t('admin.messages.table.received')}:</span> {formatDate(message.created_at)}
+                    </p>
+                  {/* Clickable message area with conditional clamping */}
+                  <p
+                    className={`text-sm text-gray-700 mb-3 cursor-pointer ${expandedMessages.has(message.id) ? 'whitespace-pre-wrap' : 'line-clamp-1'}`}
+                    onClick={() => toggleMessageExpansion(message.id)}
+                  >
+                    {message.message}
+                  </p>
+
+                   {/* Actions */}
+                   <div className="flex flex-wrap gap-2 justify-end border-t pt-3 mt-3">
+                     <button onClick={() => handleView(message)} className="text-sm text-indigo-600 hover:text-indigo-900">{t('common.view')}</button>
+                     {message.status === 'unread' ? (
+                        <button onClick={() => handleStatusChange(message.id, 'read')} className="text-sm text-green-600 hover:text-green-900">{t('admin.messages.actions.mark_read')}</button>
+                     ) : (
+                        <button onClick={() => handleStatusChange(message.id, 'unread')} className="text-sm text-yellow-600 hover:text-yellow-900">{t('admin.messages.actions.mark_unread')}</button>
+                     )}
+                     {message.status !== 'archived' && (
+                       <button onClick={() => handleStatusChange(message.id, 'archived')} className="text-sm text-blue-600 hover:text-blue-900">{t('admin.messages.actions.archive')}</button>
+                     )}
+                     <button onClick={() => handleDelete(message.id)} className="text-sm text-red-600 hover:text-red-900">{t('common.delete')}</button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </>
       )}
 
       {/* Pagination Controls */}
@@ -325,7 +330,7 @@ const AdminMessages: React.FC = () => {
       )}
 
 
-      {/* View Message Modal */}
+      {/*  ModalView Message */}
       {selectedMessage && (
         <Modal
           isOpen={isViewModalOpen}
@@ -350,8 +355,11 @@ const AdminMessages: React.FC = () => {
               <p className="text-lg text-gray-900">{formatDate(selectedMessage.created_at)}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">{t('admin.messages.table.message')}</p> {/* Assuming a key exists */}
-              <p className="text-lg text-gray-900 whitespace-pre-wrap">{selectedMessage.message}</p>
+              <p className="text-sm font-medium text-gray-500">{t('admin.messages.table.message')}</p>
+              {/* Add a scrollable container for the message */}
+              <div className="max-h-60 overflow-y-auto border rounded p-2 mt-1 bg-gray-50">
+                <p className="text-base text-gray-900 whitespace-pre-wrap">{selectedMessage.message}</p>
+              </div>
             </div>
           </div>
         </Modal>

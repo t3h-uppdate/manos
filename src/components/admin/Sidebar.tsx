@@ -21,10 +21,10 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const { t } = useTranslation(); // Initialize useTranslation
 
-  // Enhanced styling for links
-  const baseLinkClasses = "flex items-center px-4 py-2 mt-2 text-gray-600 dark:text-gray-400 transition-colors duration-150 transform rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200";
-  // Using a subtle blue for active state, adjust color as needed
-  const activeLinkClasses = "bg-blue-100 dark:bg-gray-700 text-blue-700 dark:text-gray-100 font-semibold";
+  // Enhanced styling for links - Applying Gold Theme
+  const baseLinkClasses = "flex items-center px-4 py-2 mt-2 text-gray-600 dark:text-gray-400 transition-colors duration-150 transform rounded-md hover:bg-amber-50 dark:hover:bg-[#D4AF37] hover:text-[#B4941F] dark:hover:text-gray-900"; // Changed hover colors
+  // Using gold/amber for active state
+  const activeLinkClasses = "bg-amber-100 dark:bg-[#B4941F] text-[#B4941F] dark:text-gray-900 font-semibold"; // Changed active colors
 
   // NavLink className function to apply active styles
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>

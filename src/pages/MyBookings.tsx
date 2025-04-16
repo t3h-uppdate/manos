@@ -102,40 +102,47 @@ const MyBookings: React.FC = () => {
     </div>
   );
 
+  // Apply bg-gray-50 to the outermost div and add the standard container
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-semibold text-gray-800 mb-6">{t('my_bookings.title', 'My Bookings')}</h1> {/* TODO: Add translation */}
+    <div className="bg-gray-50 flex-grow"> {/* Use flex-grow if needed */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Apply Contact page title style */}
+        <h1 className="text-4xl font-serif text-center mb-12">{t('my_bookings.title', 'My Bookings')}</h1> {/* TODO: Add translation */}
 
-      {upcomingBookings.length === 0 && pastBookings.length === 0 ? (
-        <p className="text-gray-600">{t('my_bookings.no_bookings', 'You have no upcoming or past bookings.')}</p> // TODO: Add translation
-      ) : (
-        <div className="space-y-8">
-          {/* Upcoming Bookings Section */}
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-700 mb-4">{t('my_bookings.upcoming_title', 'Upcoming Bookings')}</h2> {/* TODO: Add translation */}
-            {upcomingBookings.length > 0 ? (
-              <div className="space-y-4">
-                {upcomingBookings.map((booking) => <BookingCard key={booking.id} booking={booking} />)}
-              </div>
-            ) : (
-              <p className="text-gray-500">{t('my_bookings.no_upcoming', 'You have no upcoming bookings.')}</p> // TODO: Add translation
-            )}
+        {upcomingBookings.length === 0 && pastBookings.length === 0 ? (
+          // Style the 'no bookings' message container like a card
+          <div className="bg-white p-6 rounded-lg shadow-md text-center">
+            <p className="text-gray-600">{t('my_bookings.no_bookings', 'You have no upcoming or past bookings.')}</p> {/* TODO: Add translation */}
           </div>
+        ) : (
+          <div className="space-y-8"> {/* Keep the spacing between sections */}
+            {/* Upcoming Bookings Section - Wrap in card style */}
+            <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+              <h2 className="text-2xl font-semibold text-gray-700 mb-4">{t('my_bookings.upcoming_title', 'Upcoming Bookings')}</h2> {/* TODO: Add translation */}
+              {upcomingBookings.length > 0 ? (
+                <div className="space-y-4">
+                  {upcomingBookings.map((booking) => <BookingCard key={booking.id} booking={booking} />)}
+                </div>
+              ) : (
+                <p className="text-gray-500">{t('my_bookings.no_upcoming', 'You have no upcoming bookings.')}</p> // TODO: Add translation
+              )}
+            </div>
 
-          {/* Past Bookings Section */}
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-700 mb-4">{t('my_bookings.past_title', 'Past Bookings')}</h2> {/* TODO: Add translation */}
-            {pastBookings.length > 0 ? (
-              <div className="space-y-4">
-                {pastBookings.map((booking) => <BookingCard key={booking.id} booking={booking} />)}
-              </div>
-            ) : (
-              <p className="text-gray-500">{t('my_bookings.no_past', 'You have no past bookings.')}</p> // TODO: Add translation
-            )}
+            {/* Past Bookings Section - Wrap in card style */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-2xl font-semibold text-gray-700 mb-4">{t('my_bookings.past_title', 'Past Bookings')}</h2> {/* TODO: Add translation */}
+              {pastBookings.length > 0 ? (
+                <div className="space-y-4">
+                  {pastBookings.map((booking) => <BookingCard key={booking.id} booking={booking} />)}
+                </div>
+              ) : (
+                <p className="text-gray-500">{t('my_bookings.no_past', 'You have no past bookings.')}</p> // TODO: Add translation
+              )}
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div> {/* Close standard container */}
+    </div> // Close outermost div
   );
 };
 

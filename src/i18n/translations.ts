@@ -183,7 +183,9 @@ export const translations = {
         friday: 'Friday',
         saturday: 'Saturday',
         sunday: 'Sunday'
-      }
+      },
+      step_progress: 'Step {{current}} of {{total}}', // Added for multi-step forms
+      or: 'OR' // Added for image upload section
     },
     admin: { // Added admin section
       bookings: {
@@ -250,12 +252,13 @@ export const translations = {
       },
       dashboard: { // Added dashboard section
         title: 'Dashboard',
-        card: {
-          bookings_today: "Today's Bookings",
-          total_customers: 'Total Customers',
-          new_messages: 'New Messages'
-        },
-        charts: { // Added charts subsection
+          card: {
+            bookings_today: "Today's Bookings",
+            upcoming_appointments_24h: 'Upcoming (24h)', // Added
+            total_customers: 'Total Customers',
+            new_messages: 'New Messages'
+          },
+          charts: { // Added charts subsection
           bookings_over_time: 'Bookings Over Time',
           bookings_trend: 'Bookings'
         },
@@ -279,21 +282,62 @@ export const translations = {
           category: 'Category',
           sale_price: 'Sale Price',
           quantity: 'Quantity',
-          reorder_level: 'Reorder Level'
+            reorder_level: 'Reorder Level',
+            currency: 'Currency', // Added
+            original_price: 'Original Price', // Added
+            discount: 'Discount (%)', // Added
+            final_price: 'Final Sale Price:', // Added
+            image_section_title: 'Product Image', // Added
+            upload_image: 'Upload New Image', // Added
+            upload_hint: 'Overrides the URL below if selected.', // Added
+            image_url: 'Image URL' // Added
+          },
+          placeholders: { // Added placeholders subsection if missing, or add keys
+            original_price: 'e.g., 19.99', // Added
+            image_url: 'https://example.com/image.jpg' // Added
+          },
+          hints: { // Added hints subsection
+            original_price: 'Regular price before discount. Leave blank if not on sale.'
+          },
+          alt: { // Added alt subsection
+            preview: 'Preview'
+          },
+          buttons: {
+            add: 'Add Product',
+            update: 'Update Product',
+            remove_image: 'Remove Image' // Added
+          },
+          notifications: {
+            add_success: 'Product "{{name}}" added successfully!',
+            update_success: 'Product "{{name}}" updated successfully!',
+            delete_success: 'Product "{{name}}" deleted successfully!',
+            uploading_image: 'Uploading image...', // Added
+            image_removed_preview: 'Image preview cleared.', // Added
+            old_image_deleted: 'Old image deleted successfully.', // Added
+            upload_reverted: 'Image upload reverted due to save failure.' // Added
+          },
+          errors: {
+            load: 'Failed to load products.',
+            delete: 'Failed to delete product "{{name}}".',
+            invalid_id: 'Cannot delete product: Invalid ID.',
+            required_fields: 'Please fill in required fields (Name, Sale Price >= 0, Quantity >= 0).', // Keep existing or update if needed
+            add: 'Failed to add product.',
+            update: 'Failed to update product.',
+            required_name: 'Product name is required.', // Added
+            invalid_quantity: 'Quantity must be 0 or greater.', // Added
+            invalid_discount: 'Discount percentage must be between 0 and 100.', // Added
+            required_fields_final: 'Please ensure Name and Quantity are valid before saving.', // Added
+            upload: 'Image upload failed.', // Added
+            delete_old_image: 'Failed to delete the old image.', // Added
+            revert_upload: 'Failed to delete the newly uploaded image after product save failed.' // Added
+          },
+          steps: { // Added steps subsection
+            basic_info: 'Step 1: Basic Information',
+            pricing_stock: 'Step 2: Pricing & Stock',
+            image: 'Step 3: Product Image'
+          }
         },
-        notifications: {
-          // Add/Update success handled in form component? If not, add here.
-          // add_success: 'Product added successfully!',
-          // update_success: 'Product updated successfully!',
-          delete_success: 'Product "{{name}}" deleted successfully!'
-        },
-        errors: {
-          load: 'Failed to load products.',
-          delete: 'Failed to delete product "{{name}}".',
-          invalid_id: 'Cannot delete product: Invalid ID.'
-        }
-      },
-      services: { // Added services section
+        services: { // Added services section
         title: 'Manage Services',
         add_button: 'Add Service',
         search_placeholder: 'Search services...',
@@ -374,7 +418,8 @@ export const translations = {
         },
         actions: {
           mark_read: 'Mark Read',
-          mark_unread: 'Mark Unread'
+          mark_unread: 'Mark Unread',
+          archive: 'Archive' // Added
           // Add delete confirmation later if needed
         },
         notifications: {
@@ -545,6 +590,16 @@ export const translations = {
         staff: 'Staff', // Added staff key
         messages: 'Messages',
         settings: 'Settings'
+      },
+      header: { // Added header section
+        home: 'Home',
+        homeTooltip: 'Go to Public Homepage',
+        logout: 'Logout',
+        logoutTooltip: 'Log out from Admin Panel',
+        newBooking: 'New Booking', // Added
+        newCustomer: 'New Customer', // Added
+        newBookingModalTitle: 'Add New Booking', // Added
+        newCustomerModalTitle: 'Add New Customer' // Added
       }
       // Add other admin sections here later
     }
@@ -800,12 +855,13 @@ export const translations = {
       },
       dashboard: { // Added dashboard section
         title: 'لوحة التحكم',
-        card: {
-          bookings_today: "حجوزات اليوم",
-          total_customers: 'إجمالي العملاء',
-          new_messages: 'رسائل جديدة'
-        },
-        charts: { // Added charts subsection
+          card: {
+            bookings_today: "حجوزات اليوم",
+            upcoming_appointments_24h: 'المواعيد القادمة (24 ساعة)', // Added
+            total_customers: 'إجمالي العملاء',
+            new_messages: 'رسائل جديدة'
+          },
+          charts: { // Added charts subsection
           bookings_over_time: 'الحجوزات عبر الوقت',
           bookings_trend: 'الحجوزات'
         },
@@ -924,7 +980,8 @@ export const translations = {
         },
         actions: {
           mark_read: 'وضع علامة كمقروءة',
-          mark_unread: 'وضع علامة كغير مقروءة'
+          mark_unread: 'وضع علامة كغير مقروءة',
+          archive: 'أرشفة' // Added
           // Add delete confirmation later if needed
         },
         notifications: {
@@ -1095,6 +1152,16 @@ export const translations = {
         staff: 'الموظفون', // Added staff key
         messages: 'الرسائل',
         settings: 'الإعدادات'
+      },
+      header: { // Added header section (Arabic)
+        home: 'الرئيسية',
+        homeTooltip: 'الذهاب إلى الصفحة الرئيسية العامة',
+        logout: 'تسجيل الخروج',
+        logoutTooltip: 'تسجيل الخروج من لوحة تحكم المشرف',
+        newBooking: 'حجز جديد', // Added
+        newCustomer: 'عميل جديد', // Added
+        newBookingModalTitle: 'إضافة حجز جديد', // Added
+        newCustomerModalTitle: 'إضافة عميل جديد' // Added
       }
       // Add other admin sections here later
     }

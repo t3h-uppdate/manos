@@ -1,18 +1,25 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'; // Added useMemo
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-// Import ProductFormData instead of ProductData, add calculateSalePrice helper (or import if exported)
 import { Product, ProductFormData, addProduct, updateProduct, uploadProductImage, deleteProductImage } from '../../lib/inventoryApi';
 import { toast } from 'react-hot-toast';
+import LoadingSpinner from '../LoadingSpinner'; // Corrected import
 
-// Recreate or import calculateSalePrice helper
+// Refined Helper function to handle potential NaN values more robustly
 const calculateSalePrice = (originalPrice?: number | null, discountPercentage?: number | null): number => {
-    const origPrice = originalPrice ?? 0;
-    const discount = discountPercentage ?? 0;
+    // Ensure inputs are valid numbers, default to 0 if not
+    const origPrice = (typeof originalPrice === 'number' && !isNaN(originalPrice)) ? originalPrice : 0;
+    const discount = (typeof discountPercentage === 'number' && !isNaN(discountPercentage)) ? discountPercentage : 0;
+
     if (origPrice > 0 && discount > 0 && discount <= 100) {
-        return parseFloat((origPrice * (1 - discount / 100)).toFixed(2));
+        // Calculate discounted price
+        const discounted = origPrice * (1 - discount / 100);
+        // Ensure the result is a valid number before returning, default to 0
+        return !isNaN(discounted) ? parseFloat(discounted.toFixed(2)) : 0;
     }
-    return parseFloat(origPrice.toFixed(2));
+    // Return original price (or 0 if invalid) formatted, default to 0
+    return !isNaN(origPrice) ? parseFloat(origPrice.toFixed(2)) : 0;
 };
+
 
 interface AddEditProductFormProps {
   product: Product | null; // Product to edit, or null to add
@@ -22,27 +29,31 @@ interface AddEditProductFormProps {
 
 const AddEditProductForm: React.FC<AddEditProductFormProps> = ({ product, onSuccess, onCancel }) => {
   const { t } = useTranslation();
-  // Use ProductFormData for state type and initialize new fields
+  const [currentStep, setCurrentStep] = useState(1); // State for multi-step
+  const totalSteps = 3; // Define total number of steps
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
+
   const [formData, setFormData] = useState<ProductFormData>({
-    name: '',
-    description: '',
-    brand: '',
-    category: '',
-    purchase_price: undefined,
-    original_price: undefined, // Added
-    currency: 'USD', // Added - Default to USD
-    discount_percentage: 0, // Added - Default to 0
-    quantity_on_hand: 0,
-    reorder_level: undefined,
-    image_url: '',
+    name: '', // Step 1
+    description: '', // Step 1
+    brand: '', // Step 1
+    category: '', // Step 1
+    purchase_price: undefined, // Step 2
+    original_price: undefined, // Step 2
+    currency: 'USD', // Step 2 - Default to USD
+    discount_percentage: 0, // Step 2 - Default to 0
+    quantity_on_hand: 0, // Step 2
+    reorder_level: undefined, // Step 2
+    image_url: '', // Step 3
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState<boolean>(false); // State for image upload status
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null); // Ref for the file input
-  const [initialImageUrl, setInitialImageUrl] = useState<string | null>(null); // Store the initial image URL when editing
+  const [imageFile, setImageFile] = useState<File | null>(null); // Step 3
+  const [imagePreview, setImagePreview] = useState<string | null>(null); // Step 3
+  const [isUploading, setIsUploading] = useState<boolean>(false); // Step 3 - Image upload status
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false); // Final submission status
+  const [error, setError] = useState<string | null>(null); // General error
+  const [stepErrors, setStepErrors] = useState<Record<number, string | null>>({}); // Step-specific errors
+  const fileInputRef = useRef<HTMLInputElement>(null); // Step 3 - Ref for the file input
+  const [initialImageUrl, setInitialImageUrl] = useState<string | null>(null); // Step 3 - Store the initial image URL when editing
 
   const isEditing = product !== null;
   // Construct the expected base URL for Supabase storage images
@@ -86,6 +97,7 @@ const AddEditProductForm: React.FC<AddEditProductFormProps> = ({ product, onSucc
       setImagePreview(null); // Clear preview
       setImageFile(null); // Clear file
     }
+    setIsLoading(false); // Set loading to false after initial setup
      // Clean up object URL on unmount or when preview changes
      return () => {
         if (imagePreview && imagePreview.startsWith('blob:')) {
@@ -184,29 +196,28 @@ const AddEditProductForm: React.FC<AddEditProductFormProps> = ({ product, onSucc
     setIsSubmitting(true);
     setError(null);
 
-    // Basic validation - Check name and quantity. Price validation is now implicit via original_price/discount
+    // Final validation before submitting (should have been caught by handleNext, but good safeguard)
     if (!formData.name || formData.quantity_on_hand === undefined || formData.quantity_on_hand < 0) {
-       // Consider adding validation for original_price if needed (e.g., must be >= 0 if entered)
-      setError(t('admin.forms.product.errors.required_fields', 'Please fill in all required fields (Name, Quantity).'));
-      setIsSubmitting(false);
-      return;
+        setError(t('admin.forms.product.errors.required_fields_final', 'Please ensure Name and Quantity are valid before saving.'));
+        // Do NOT change steps here, just prevent submission
+        setIsSubmitting(false);
+        return;
     }
-     // Validate discount percentage (treat undefined as 0 for validation)
-     const discountForValidation = formData.discount_percentage ?? 0;
-     if (discountForValidation < 0 || discountForValidation > 100) {
+    const discount = formData.discount_percentage ?? 0;
+    if (discount < 0 || discount > 100) {
         setError(t('admin.forms.product.errors.invalid_discount', 'Discount percentage must be between 0 and 100.'));
         setIsSubmitting(false);
         return;
     }
 
-    let finalImageUrl: string | null = formData.image_url || null; // Start with URL input or null
-    let uploadedUrl: string | null = null; // To store URL if we upload a new image
-    let imageToDelete: string | null = null; // To store URL of image to delete
 
-    // --- Image Handling Logic ---
-    try {
-        // 1. Check if a new file was selected
-        if (imageFile) {
+    let finalImageUrl: string | null = formData.image_url || null; // Step 3 - Start with URL input or null
+    let uploadedUrl: string | null = null; // Step 3 - To store URL if we upload a new image
+    let imageToDelete: string | null = null; // Step 3 - To store URL of image to delete
+
+    // --- Image Handling Logic (only if imageFile exists) ---
+    if (imageFile) {
+        try {
             setIsUploading(true);
             toast.loading(t('admin.forms.product.notifications.uploading_image'));
             uploadedUrl = await uploadProductImage(imageFile);
@@ -218,43 +229,52 @@ const AddEditProductForm: React.FC<AddEditProductFormProps> = ({ product, onSucc
             if (isEditing && initialImageUrl && initialImageUrl.startsWith(supabaseStoragePrefix)) {
                 imageToDelete = initialImageUrl;
             }
+        } catch (uploadErr) {
+            console.error("Image upload failed:", uploadErr);
+            setError(t('admin.forms.product.errors.upload'));
+            toast.error(t('admin.forms.product.errors.upload'));
+            setIsUploading(false);
+            setIsSubmitting(false);
+            return; // Stop submission if upload fails
         }
-        // 2. Check if the URL changed from the initial one (and no new file was uploaded)
-        else if (isEditing && initialImageUrl !== finalImageUrl) {
+    } else {
+        // Logic for handling URL changes or removal when no new file is uploaded
+        // 1. Check if the URL changed from the initial one
+        if (isEditing && initialImageUrl !== finalImageUrl) {
              // If the initial image was from Supabase and the new URL is different (or empty), mark old one for deletion
              if (initialImageUrl && initialImageUrl.startsWith(supabaseStoragePrefix)) {
                  imageToDelete = initialImageUrl;
              }
         }
-        // 3. Check if the image was explicitly removed (finalImageUrl is null/empty, and there was an initial image)
+        // 2. Check if the image was explicitly removed (finalImageUrl is null/empty, and there was an initial image)
         else if (isEditing && !finalImageUrl && initialImageUrl && initialImageUrl.startsWith(supabaseStoragePrefix)) {
             imageToDelete = initialImageUrl;
         }
-
-        // --- Prepare Product Data for API (using ProductFormData structure) ---
-        const dataToSubmit: ProductFormData = {
-            name: formData.name,
-            description: formData.description || null,
-            brand: formData.brand || null,
-            category: formData.category || null,
-            purchase_price: formData.purchase_price === undefined ? null : formData.purchase_price,
-            original_price: formData.original_price === undefined ? null : formData.original_price,
-            currency: formData.currency || 'USD', // Default to USD if empty
-            discount_percentage: formData.discount_percentage ?? 0,
-            quantity_on_hand: formData.quantity_on_hand ?? 0,
-            reorder_level: formData.reorder_level === undefined ? null : formData.reorder_level,
-            image_url: finalImageUrl,
-        };
+    }
 
 
-        // --- Add/Update Product ---
+    // --- Prepare Product Data for API ---
+    const dataToSubmit: ProductFormData = {
+        name: formData.name,
+        description: formData.description || null,
+        brand: formData.brand || null,
+        category: formData.category || null,
+        purchase_price: formData.purchase_price === undefined ? null : formData.purchase_price,
+        original_price: formData.original_price === undefined ? null : formData.original_price,
+        currency: formData.currency || 'USD',
+        discount_percentage: formData.discount_percentage ?? 0,
+        quantity_on_hand: formData.quantity_on_hand ?? 0,
+        reorder_level: formData.reorder_level === undefined ? null : formData.reorder_level,
+        image_url: finalImageUrl,
+    };
+
+    // --- Add/Update Product ---
+    try {
         let resultProduct: Product;
         if (isEditing && product?.id) {
-            // Pass the correct type (Partial<ProductFormData>) for update
             resultProduct = await updateProduct(product.id, dataToSubmit);
             toast.success(t('admin.forms.product.notifications.update_success', { name: resultProduct.name }));
         } else {
-            // Pass the correct type (ProductFormData) for add
             resultProduct = await addProduct(dataToSubmit);
             toast.success(t('admin.forms.product.notifications.add_success', { name: resultProduct.name }));
         }
@@ -267,206 +287,278 @@ const AddEditProductForm: React.FC<AddEditProductFormProps> = ({ product, onSucc
             } catch (deleteErr) {
                 console.error("Failed to delete old image:", deleteErr);
                 toast.error(t('admin.forms.product.errors.delete_old_image'));
-                // Don't necessarily fail the whole operation, but notify the user
             }
         }
 
         onSuccess(resultProduct); // Pass the added/updated product back
 
     } catch (err) {
-        const messageKey = isUploading
-            ? 'admin.forms.product.errors.upload'
-            : (isEditing ? 'admin.forms.product.errors.update' : 'admin.forms.product.errors.add');
+        const messageKey = isEditing ? 'admin.forms.product.errors.update' : 'admin.forms.product.errors.add';
         const message = t(messageKey);
         setError(message);
         toast.error(message);
-        toast.dismiss(); // Ensure loading toast is dismissed on error
-        console.error("Error during product save/image handling:", err);
+        console.error("Error during product save:", err);
 
-        // If upload succeeded but product update failed, try to delete the newly uploaded image?
+        // If product save failed AFTER a successful image upload, try to delete the newly uploaded image
         if (uploadedUrl) {
-            console.error("Product save failed after image upload. Attempting to delete uploaded image:", uploadedUrl); // Use console.error
+            console.error("Product save failed after image upload. Attempting to delete uploaded image:", uploadedUrl);
             try {
                 await deleteProductImage(uploadedUrl);
-                toast.error(t('admin.forms.product.notifications.upload_reverted')); // Use toast.error instead of warn
+                toast.error(t('admin.forms.product.notifications.upload_reverted'));
             } catch (revertErr) {
                 console.error("Failed to revert image upload:", revertErr);
-                toast.error(t('admin.forms.product.errors.revert_upload')); // Keep as error
+                toast.error(t('admin.forms.product.errors.revert_upload'));
             }
         }
     } finally {
-        setIsUploading(false);
         setIsSubmitting(false);
-        toast.dismiss(); // Ensure loading toast is dismissed
+        // No need to dismiss toast here, handled within specific flows
     }
   };
 
+  // --- Step Navigation ---
+  const handleNext = () => {
+      // Optional: Add validation for the current step before proceeding
+      let currentStepError: string | null = null;
+      if (currentStep === 1 && !formData.name) {
+          currentStepError = t('admin.forms.product.errors.required_name', 'Product name is required.');
+      } else if (currentStep === 2) {
+          if (formData.quantity_on_hand === undefined || formData.quantity_on_hand < 0) {
+              currentStepError = t('admin.forms.product.errors.invalid_quantity', 'Quantity must be 0 or greater.');
+          } else {
+              const discount = formData.discount_percentage ?? 0;
+              if (discount < 0 || discount > 100) {
+                  currentStepError = t('admin.forms.product.errors.invalid_discount', 'Discount must be between 0 and 100.');
+              }
+          }
+      }
+      // Add more step-specific validation as needed
+
+      setStepErrors(prev => ({ ...prev, [currentStep]: currentStepError }));
+
+      if (!currentStepError) {
+          setError(null); // Clear general error if step validation passes
+          if (currentStep < totalSteps) {
+              setCurrentStep(currentStep + 1);
+          }
+      } else {
+          setError(currentStepError); // Show step error as general error for now
+      }
+  };
+
+  const handlePrevious = () => {
+    setError(null); // Clear errors when going back
+    setStepErrors(prev => ({ ...prev, [currentStep]: null, [currentStep - 1]: null })); // Clear errors for current and previous step
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  // Removed pre-calculation of displaySalePrice
+
   return (
-    <form onSubmit={handleSubmit} className="p-6 space-y-4">
-      {/* Title is handled by the Modal component now, no need for h2 here */}
-      {/* <h2 className="text-xl font-semibold mb-4">{t(isEditing ? 'admin.inventory.edit_modal_title' : 'admin.inventory.add_modal_title')}</h2> */}
-
-      {error && <div className="text-red-600 bg-red-100 p-3 rounded">{error}</div>} {/* Error message is already translated */}
-
-      {/* Form Fields */}
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.name')} <span className="text-red-500">*</span></label>
-        <input
-          type="text"
-          id="name"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.description')}</label>
-        <textarea
-          id="description"
-          name="description"
-          value={formData.description ?? ''}
-          onChange={handleChange}
-          rows={3}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="brand" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.brand')}</label>
-          <input
-            type="text"
-            id="brand"
-            name="brand"
-            value={formData.brand ?? ''}
-            onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
+    <form onSubmit={handleSubmit} className="p-6 space-y-6"> {/* Increased spacing */}
+      {isLoading ? (
+        <div className="flex justify-center items-center p-10">
+          <LoadingSpinner />
         </div>
-        <div>
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.category')}</label>
-          <input
-            type="text"
-            id="category"
-            name="category"
-            value={formData.category ?? ''}
-            onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
+      ) : (
+        <>
+          {/* Progress Indicator (Optional but Recommended) */}
+          <div className="mb-6">
+        <p className="text-sm font-medium text-gray-500">{t('common.step_progress', { current: currentStep, total: totalSteps })}</p>
+        <div className="mt-1 w-full bg-gray-200 rounded-full h-2">
+          <div
+            className="bg-indigo-600 h-2 rounded-full transition-all duration-300 ease-in-out"
+            style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+          ></div>
         </div>
       </div>
 
-       {/* Pricing Section */}
-       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4 mt-4">
-         {/* Currency */}
-         <div>
-           <label htmlFor="currency" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.currency', 'Currency')}</label>
-           <select
-             id="currency"
-             name="currency"
-             value={formData.currency ?? 'USD'}
-             onChange={handleChange}
-             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-           >
-             <option value="USD">USD ($)</option>
-             <option value="SYP">SYP (ل.س)</option>
-             {/* Add other currencies if needed */}
-           </select>
-         </div>
-         {/* Original Price */}
-         <div>
-           <label htmlFor="original_price" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.original_price', 'Original Price')}</label>
-           <input
-             type="number"
-             id="original_price"
-             name="original_price"
-             value={formData.original_price ?? ''}
-             onChange={handleChange}
-             step="0.01"
-             min="0"
-             placeholder={t('admin.forms.product.placeholders.original_price', 'e.g., 19.99')}
-             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-           />
-            <p className="mt-1 text-xs text-gray-500">{t('admin.forms.product.hints.original_price', 'Regular price before discount. Leave blank if not on sale.')}</p>
-         </div>
-          {/* Discount Percentage */}
-         <div>
-           <label htmlFor="discount_percentage" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.discount', 'Discount (%)')}</label>
-           <input
-             type="number"
-             id="discount_percentage"
-             name="discount_percentage"
-             value={formData.discount_percentage ?? ''}
-             onChange={handleChange}
-             step="0.1" // Allow finer discount steps if needed
-             min="0"
-             max="100"
-             placeholder="0"
-             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-           />
-         </div>
-       </div>
-        {/* Calculated Sale Price Display */}
-        <div className="mt-2 text-right">
-            <span className="text-sm font-medium text-gray-700">{t('admin.forms.product.labels.final_price', 'Final Sale Price:')} </span>
-            <span className="text-lg font-bold text-indigo-600">
-                {formData.currency === 'SYP' ? 'ل.س' : '$'} {/* Display correct symbol */}
-                {useMemo(() => calculateSalePrice(formData.original_price, formData.discount_percentage), [formData.original_price, formData.discount_percentage]).toFixed(2)}
-            </span>
-        </div>
+      {/* General Error Display */}
+      {error && <div className="text-red-600 bg-red-100 p-3 rounded mb-4">{error}</div>}
 
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4 mt-4">
-         {/* Purchase Price */}
-         <div>
-           <label htmlFor="purchase_price" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.purchase_price')}</label>
-           <input
-             type="number"
-             id="purchase_price"
-             name="purchase_price"
-             value={formData.purchase_price ?? ''}
-             onChange={handleChange}
-             step="0.01"
-             min="0"
-             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-           />
-         </div>
-         {/* Quantity */}
-        <div>
-          <label htmlFor="quantity_on_hand" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.quantity')} <span className="text-red-500">*</span></label>
-          <input
-            type="number"
-            id="quantity_on_hand"
-            name="quantity_on_hand"
-            value={formData.quantity_on_hand}
-            onChange={handleChange}
-            required
-            step="1"
-            min="0"
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
+      {/* --- Step 1: Basic Info --- */}
+      {/* Use standard conditional rendering */}
+      {currentStep === 1 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium text-gray-900">{t('admin.forms.product.steps.basic_info', 'Step 1: Basic Information')}</h3>
+          {/* Name */}
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.name')} <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+             {stepErrors[1] && <p className="mt-1 text-xs text-red-600">{stepErrors[1]}</p>}
+          </div>
+          {/* Description */}
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.description')}</label>
+            <textarea
+              id="description"
+              name="description"
+              value={formData.description ?? ''}
+              onChange={handleChange}
+              rows={3}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
+          {/* Brand & Category */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="brand" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.brand')}</label>
+              <input
+                type="text"
+                id="brand"
+                name="brand"
+                value={formData.brand ?? ''}
+                onChange={handleChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.category')}</label>
+              <input
+                type="text"
+                id="category"
+                name="category"
+                value={formData.category ?? ''}
+                onChange={handleChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </div>
+          </div>
         </div>
-        <div>
-          <label htmlFor="reorder_level" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.reorder_level')}</label>
-          <input
-            type="number"
-            id="reorder_level"
-            name="reorder_level"
-            value={formData.reorder_level ?? ''} // Use empty string for undefined in input
-            onChange={handleChange}
-            step="1"
-            min="0"
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
-        </div>
-      </div>
+      )}
 
-       {/* Image Upload/URL Section */}
-       <div className="space-y-4 border-t pt-4 mt-4">
-         <h3 className="text-lg font-medium text-gray-900">{t('admin.forms.product.labels.image_section_title', 'Product Image')}</h3>
+      {/* --- Step 2: Pricing & Stock --- */}
+      {/* Use standard conditional rendering */}
+      {currentStep === 2 && (
+        <div className="space-y-4">
+           <h3 className="text-lg font-medium text-gray-900">{t('admin.forms.product.steps.pricing_stock', 'Step 2: Pricing & Stock')}</h3>
+           {/* Pricing Section */}
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4 mt-4">
+             {/* Currency */}
+             <div>
+               <label htmlFor="currency" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.currency', 'Currency')}</label>
+               <select
+                 id="currency"
+                 name="currency"
+                 value={formData.currency ?? 'USD'}
+                 onChange={handleChange}
+                 className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+               >
+                 <option value="USD">USD ($)</option>
+                 <option value="SYP">SYP (ل.س)</option>
+               </select>
+             </div>
+             {/* Original Price */}
+             <div>
+               <label htmlFor="original_price" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.original_price', 'Original Price')}</label>
+               <input
+                 type="number"
+                 id="original_price"
+                 name="original_price"
+                 value={formData.original_price ?? ''}
+                 onChange={handleChange}
+                 step="0.01"
+                 min="0"
+                 placeholder={t('admin.forms.product.placeholders.original_price', 'e.g., 19.99')}
+                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+               />
+                <p className="mt-1 text-xs text-gray-500">{t('admin.forms.product.hints.original_price', 'Regular price before discount. Leave blank if not on sale.')}</p>
+             </div>
+              {/* Discount Percentage */}
+             <div>
+               <label htmlFor="discount_percentage" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.discount', 'Discount (%)')}</label>
+               <input
+                 type="number"
+                 id="discount_percentage"
+                 name="discount_percentage"
+                 value={formData.discount_percentage ?? ''}
+                 onChange={handleChange}
+                 step="0.1"
+                 min="0"
+                 max="100"
+                 placeholder="0"
+                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+               />
+             </div>
+           </div>
+            {/* Calculated Sale Price Display */}
+            <div className="mt-2 text-right">
+                <span className="text-sm font-medium text-gray-700">{t('admin.forms.product.labels.final_price', 'Final Sale Price:')} </span>
+                <span className="text-lg font-bold text-indigo-600">
+                    {formData.currency === 'SYP' ? 'ل.س' : '$'}
+                    {/* Calculate directly here, only when step 2 is active */}
+                    {(() => {
+                        const price = calculateSalePrice(formData.original_price, formData.discount_percentage);
+                        return typeof price === 'number' ? price.toFixed(2) : '0.00';
+                    })()}
+                </span>
+            </div>
+
+           {/* Stock Section */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4 mt-4">
+             {/* Purchase Price */}
+             <div>
+               <label htmlFor="purchase_price" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.purchase_price')}</label>
+               <input
+                 type="number"
+                 id="purchase_price"
+                 name="purchase_price"
+                 value={formData.purchase_price ?? ''}
+                 onChange={handleChange}
+                 step="0.01"
+                 min="0"
+                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+               />
+             </div>
+             {/* Quantity */}
+            <div>
+              <label htmlFor="quantity_on_hand" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.quantity')} <span className="text-red-500">*</span></label>
+              <input
+                type="number"
+                id="quantity_on_hand"
+                name="quantity_on_hand"
+                value={formData.quantity_on_hand}
+                onChange={handleChange}
+                required
+                step="1"
+                min="0"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </div>
+            {/* Reorder Level */}
+            <div>
+              <label htmlFor="reorder_level" className="block text-sm font-medium text-gray-700">{t('admin.forms.product.labels.reorder_level')}</label>
+              <input
+                type="number"
+                id="reorder_level"
+                name="reorder_level"
+                value={formData.reorder_level ?? ''}
+                onChange={handleChange}
+                step="1"
+                min="0"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </div>
+          </div>
+           {stepErrors[2] && <p className="mt-2 text-xs text-red-600">{stepErrors[2]}</p>}
+        </div>
+      )}
+
+      {/* --- Step 3: Image --- */}
+      {/* Use standard conditional rendering */}
+      {currentStep === 3 && (
+        <div className="space-y-4 border-t pt-4 mt-4">
+         <h3 className="text-lg font-medium text-gray-900">{t('admin.forms.product.steps.image', 'Step 3: Product Image')}</h3>
 
          {/* Image Preview */}
          {imagePreview && (
@@ -484,7 +576,7 @@ const AddEditProductForm: React.FC<AddEditProductFormProps> = ({ product, onSucc
              name="imageFile"
              ref={fileInputRef}
              onChange={handleFileChange}
-             accept="image/png, image/jpeg, image/gif, image/webp" // Specify acceptable image types
+             accept="image/png, image/jpeg, image/gif, image/webp"
              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 disabled:opacity-50"
              disabled={isSubmitting || isUploading}
            />
@@ -500,7 +592,6 @@ const AddEditProductForm: React.FC<AddEditProductFormProps> = ({ product, onSucc
                 <span className="bg-white px-2 text-sm text-gray-500">{t('common.or', 'OR')}</span>
             </div>
          </div>
-
 
          {/* Image URL Input */}
          <div>
@@ -530,11 +621,20 @@ const AddEditProductForm: React.FC<AddEditProductFormProps> = ({ product, onSucc
                 </button>
             </div>
          )}
+         {/* Display upload status */}
+         {isUploading && (
+            <div className="flex items-center text-sm text-indigo-600">
+                <LoadingSpinner className="mr-2 h-4 w-4" />
+                {t('admin.forms.product.notifications.uploading_image', 'Uploading image...')}
+            </div>
+         )}
        </div>
+      )}
 
 
-      {/* Action Buttons */}
-      <div className="flex justify-end space-x-3 pt-4 border-t mt-6">
+      {/* --- Action Buttons --- */}
+      <div className="flex justify-between items-center pt-6 border-t mt-6">
+        {/* Cancel Button (Always Visible) */}
         <button
           type="button"
           onClick={onCancel}
@@ -543,26 +643,49 @@ const AddEditProductForm: React.FC<AddEditProductFormProps> = ({ product, onSucc
         >
           {t('common.cancel')}
         </button>
-        <button
-          type="submit"
-          disabled={isSubmitting || isUploading}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-        >
-          {isUploading && <LoadingSpinner className="mr-2 h-4 w-4 animate-spin" />} {/* Add spinner */}
-          {isSubmitting || isUploading ? t('common.saving') : (isEditing ? t('admin.forms.product.buttons.update') : t('admin.forms.product.buttons.add'))}
-        </button>
-      </div>
+
+        <div className="flex space-x-3">
+            {/* Previous Button (Visible from Step 2 onwards) */}
+            {currentStep > 1 && (
+                <button
+                    type="button"
+                    onClick={handlePrevious}
+                    disabled={isSubmitting || isUploading}
+                    className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out disabled:opacity-50"
+                >
+                    {t('common.previous')}
+                </button>
+            )}
+
+            {/* Next Button (Visible until the last step) */}
+            {currentStep < totalSteps && (
+                <button
+                    type="button"
+                    onClick={handleNext}
+                    disabled={isSubmitting || isUploading}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out disabled:opacity-50"
+                >
+                    {t('common.next')}
+                </button>
+            )}
+
+            {/* Save/Submit Button (Visible only on the last step) */}
+            {currentStep === totalSteps && (
+                <button
+                    type="submit"
+                    disabled={isSubmitting || isUploading}
+                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                    {isSubmitting && <LoadingSpinner className="mr-2 h-4 w-4 animate-spin" />}
+                    {isSubmitting ? t('common.saving') : (isEditing ? t('admin.forms.product.buttons.update') : t('admin.forms.product.buttons.add'))}
+                </button>
+            )}
+          </div>
+          </div>
+        </>
+      )}
     </form>
   );
 };
-
-// Simple spinner component (can be moved to a shared components file)
-const LoadingSpinner: React.FC<{ className?: string }> = ({ className = "h-5 w-5 text-indigo-600" }) => (
-    <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-    </svg>
-);
-
 
 export default AddEditProductForm;

@@ -90,11 +90,11 @@ const CustomerRegister: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8"> {/* Changed background */}
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-lg shadow-md">
         <div>
           {/* Use translation key */}
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-serif text-gray-900"> {/* Changed font */}
             {t('auth.register.title')}
           </h2>
         </div>
@@ -112,7 +112,7 @@ const CustomerRegister: React.FC = () => {
                 type="text"
                 autoComplete="name"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-[#D4AF37] focus:border-[#D4AF37] focus:z-10 sm:text-sm"
                 // Use translation key
                 placeholder={t('auth.register.namePlaceholder')}
                 value={name}
@@ -129,7 +129,7 @@ const CustomerRegister: React.FC = () => {
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-[#D4AF37] focus:border-[#D4AF37] focus:z-10 sm:text-sm"
                 // Use translation key
                 placeholder={t('auth.register.emailPlaceholder')}
                 value={email}
@@ -145,7 +145,7 @@ const CustomerRegister: React.FC = () => {
                 name="phone"
                 type="tel"
                 autoComplete="tel"
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-[#D4AF37] focus:border-[#D4AF37] focus:z-10 sm:text-sm"
                 // Use translation key
                 placeholder={t('auth.register.phonePlaceholder')}
                 value={phone}
@@ -162,7 +162,7 @@ const CustomerRegister: React.FC = () => {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-[#D4AF37] focus:border-[#D4AF37] focus:z-10 sm:text-sm"
                 // Use translation key
                 placeholder={t('auth.register.passwordPlaceholder')}
                 value={password}
@@ -176,7 +176,7 @@ const CustomerRegister: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#D4AF37] hover:bg-[#B4941F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D4AF37] disabled:opacity-50"
             >
               {/* Use translation keys */}
               {loading ? t('auth.register.loadingButton') : t('auth.register.submitButton')}
@@ -187,7 +187,7 @@ const CustomerRegister: React.FC = () => {
           <p>
             {/* Use translation keys */}
             {t('auth.register.alreadyHaveAccount')}{' '}
-            <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+            <Link to="/login" className="font-medium text-[#D4AF37] hover:text-[#B4941F]">
               {t('auth.register.signInLink')}
             </Link>
           </p>
