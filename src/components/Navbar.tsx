@@ -1,18 +1,21 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // Added useState, useEffect, useRef
 import { Link, NavLink, useNavigate } from 'react-router-dom'; // Import NavLink
 import { useTranslation } from 'react-i18next';
-import { Menu, Globe, LogOut } from 'lucide-react'; // Import LogOut icon
+import { Menu, Globe, LogOut, MoreHorizontal } from 'lucide-react'; // Import LogOut and MoreHorizontal icons
 import { useAuth } from '../hooks/useAuth'; // Corrected import path
 
 export const Navbar = () => {
   const { t, i18n } = useTranslation();
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false); // State for the "More" dropdown
+  const moreMenuRef = useRef<HTMLDivElement>(null); // Ref for click outside detection
   const { user, signOut, loading, isAdmin } = useAuth(); // Get user, signOut, isAdmin from context
   const navigate = useNavigate(); // Hook for navigation after logout
 
   const handleLogout = async () => {
     await signOut();
-    // Optionally navigate to home or login page after logout
+    setIsMoreMenuOpen(false); // Close more menu on logout
+    setIsMenuOpen(false); // Close mobile menu on logout
     navigate('/');
   };
 
@@ -23,9 +26,18 @@ export const Navbar = () => {
   };
 
   // Close mobile menu when navigating
+  // Close mobile menu when navigating
   const handleMobileLinkClick = () => {
     setIsMenuOpen(false);
+    setIsMoreMenuOpen(false); // Also close more menu if open
   };
+
+  // Close More menu when navigating from it
+  const handleMoreMenuLinkClick = () => {
+    setIsMoreMenuOpen(false);
+    // Don't close the main mobile menu here, only the more menu
+  };
+
 
   // Define NavLink classes
   const baseNavLinkClass = "text-gray-700 hover:text-gold-600 transition-colors duration-150";
@@ -33,6 +45,20 @@ export const Navbar = () => {
 
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
     `${baseNavLinkClass} ${isActive ? activeNavLinkClass : ''}`;
+
+  // Click outside handler for the "More" menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+        setIsMoreMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
 
   return (
@@ -42,7 +68,7 @@ export const Navbar = () => {
           <Link to="/" className="text-2xl font-serif text-gray-900">Manos</Link>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-8 relative"> {/* Added relative positioning context */}
             <NavLink to="/" className={getNavLinkClass} end>{t('navigation.home')}</NavLink>
             <NavLink to="/about" className={getNavLinkClass}>{t('navigation.about')}</NavLink>
             <NavLink to="/contact" className={getNavLinkClass}>{t('navigation.contact')}</NavLink>
@@ -68,33 +94,62 @@ export const Navbar = () => {
 
             {/* Conditional Auth Links */}
             {!loading && ( // Don't show links until auth state is loaded
-               user ? (
-                 <>
-                   {/* Display user info (e.g., email) - can be enhanced */}
-                   <span className="text-gray-700 text-sm hidden lg:block" title={user.email}>{user.email?.split('@')[0]}</span> {/* Show partial email */}
-                   <NavLink to="/my-bookings" className={getNavLinkClass}>{t('navigation.my_bookings')}</NavLink> {/* Use translation */}
-                   {/* Conditionally render Admin Dashboard link */}
-                   {isAdmin && (
-                     <NavLink to="/admin/" className={getNavLinkClass}>{t('navigation.adminDashboard')}</NavLink>
-                   )}
-                   <button
-                     onClick={handleLogout}
-                     className="flex items-center text-gray-700 hover:text-gold-600"
-                     title={t('navigation.logout')} // Use translation for title
-                   >
-                     <LogOut className="w-5 h-5 mr-1" /> {t('navigation.logout')} {/* Use translation */}
-                   </button>
-                 </>
-               ) : (
-                 <>
-                   <NavLink to="/login" className={getNavLinkClass}>{t('navigation.login')}</NavLink>
-                   <NavLink to="/register" className={getNavLinkClass}>{t('navigation.register')}</NavLink>
-                 </>
-               )
+             user ? (
+               <div ref={moreMenuRef}> {/* Wrap button and dropdown for click outside */}
+                 <button
+                   onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+                   className="flex items-center text-gray-700 hover:text-gold-600"
+                   title={t('navigation.more')} // Added translation key
+                 >
+                   <MoreHorizontal className="w-5 h-5" />
+                 </button>
+                 {/* More Dropdown Menu */}
+                 {isMoreMenuOpen && (
+                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-60">
+                     {/* Display user info */}
+                     <div className="px-4 py-2 text-sm text-gray-500 border-b">
+                       {t('navigation.signedInAs')}{' '} {/* Added translation key */}
+                       <span className="font-medium text-gray-700" title={user.email}>
+                         {user.email?.split('@')[0]}
+                       </span>
+                     </div>
+                     <NavLink
+                       to="/my-bookings"
+                       onClick={handleMoreMenuLinkClick}
+                       className={({ isActive }) => `block px-4 py-2 text-sm ${isActive ? 'text-gold-600 bg-gold-50' : 'text-gray-700'} hover:bg-gray-100`}
+                     >
+                       {t('navigation.my_bookings')}
+                     </NavLink>
+                     {isAdmin && (
+                       <NavLink
+                         to="/admin/"
+                         onClick={handleMoreMenuLinkClick}
+                         className={({ isActive }) => `block px-4 py-2 text-sm ${isActive ? 'text-gold-600 bg-gold-50' : 'text-gray-700'} hover:bg-gray-100`}
+                       >
+                         {t('navigation.adminDashboard')}
+                       </NavLink>
+                     )}
+                     <button
+                       onClick={handleLogout}
+                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                     >
+                       {t('navigation.logout')}
+                     </button>
+                   </div>
+                 )}
+               </div>
+             ) : (
+               <>
+                 {/* Show Login/Register only when logged out */}
+                 <NavLink to="/login" className={getNavLinkClass}>{t('navigation.login')}</NavLink>
+                 <NavLink to="/register" className={getNavLinkClass}>{t('navigation.register')}</NavLink>
+               </>
+             )
             )}
             {/* End Conditional Auth Links */}
           </div>
 
+          {/* Mobile Menu Button */}
           <button
             className="md:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -149,20 +204,30 @@ export const Navbar = () => {
                     {!loading && (
                       user ? (
                         <>
-                          <NavLink to="/my-bookings" onClick={handleMobileLinkClick} className={getMobileNavLinkClass}>{t('navigation.my_bookings')}</NavLink>
+                          {/* User Info */}
+                          <div className="px-3 py-2 text-sm text-gray-500 border-t border-b">
+                            {t('navigation.signedInAs')}{' '} {/* Added translation key */}
+                            <span className="font-medium text-gray-700" title={user.email}>
+                              {user.email?.split('@')[0]}
+                            </span>
+                          </div>
+                          {/* Always show My Bookings */}
+                           <NavLink to="/my-bookings" onClick={handleMobileLinkClick} className={getMobileNavLinkClass}>{t('navigation.my_bookings')}</NavLink>
                           {/* Conditionally render Admin Dashboard link (Mobile) */}
                           {isAdmin && (
                             <NavLink to="/admin/" onClick={handleMobileLinkClick} className={getMobileNavLinkClass}>{t('navigation.adminDashboard')}</NavLink>
                           )}
+                          {/* Logout Button */}
                           <button
-                            onClick={() => { handleLogout(); handleMobileLinkClick(); }}
+                            onClick={() => { handleLogout(); handleMobileLinkClick(); }} // handleMobileLinkClick closes the main menu
                             className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                           >
-                            {t('navigation.logout')} ({user.email?.split('@')[0]})
+                            {t('navigation.logout')}
                           </button>
                         </>
                       ) : (
                         <>
+                          {/* Show Login/Register only when logged out */}
                           <NavLink to="/login" onClick={handleMobileLinkClick} className={getMobileNavLinkClass}>{t('navigation.login')}</NavLink>
                           <NavLink to="/register" onClick={handleMobileLinkClick} className={getMobileNavLinkClass}>{t('navigation.register')}</NavLink>
                         </>

@@ -11,7 +11,9 @@ export const translations = {
       login: 'Login', // Added
       register: 'Register', // Added
       logout: 'Logout', // Added
-      adminDashboard: 'Admin Dashboard' // Added
+      adminDashboard: 'Admin Dashboard', // Added
+      more: 'More', // Added
+      signedInAs: 'Signed in as:' // Added
     },
     inventory: { // Added inventory section for public page
       title: 'Our Products',
@@ -559,7 +561,9 @@ export const translations = {
       login: 'تسجيل الدخول', // Added
       register: 'تسجيل', // Added
       logout: 'تسجيل الخروج', // Added
-      adminDashboard: 'لوحة تحكم المشرف' // Added
+      adminDashboard: 'لوحة تحكم المشرف', // Added
+      more: 'المزيد', // Added
+      signedInAs: 'تسجيل الدخول باسم:' // Added
     },
     inventory: { // Added inventory section for public page (Arabic)
       title: 'منتجاتنا',
