@@ -143,9 +143,10 @@ const AdminInventory: React.FC = () => {
       </div>
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        <table className="min-w-full leading-normal">
+        <table className="min-w-full leading-normal table-fixed"> {/* Added table-fixed for potentially better column control */}
           <thead>
             <tr className="bg-gray-100 text-left text-gray-600 uppercase text-sm">
+              <th className="px-3 py-3 border-b-2 border-gray-200 w-16">{t('admin.inventory.table.image', 'Image')}</th> {/* New Image column header */}
               <th className="px-5 py-3 border-b-2 border-gray-200">{t('admin.inventory.table.name')}</th>
               <th className="px-5 py-3 border-b-2 border-gray-200">{t('admin.inventory.table.brand')}</th>
               <th className="px-5 py-3 border-b-2 border-gray-200">{t('admin.inventory.table.category')}</th>
@@ -156,18 +157,32 @@ const AdminInventory: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredProducts.length === 0 ? ( // Check filteredProducts length
+            {filteredProducts.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-10 text-gray-500">
+                {/* Adjusted colSpan for the new column */}
+                <td colSpan={8} className="text-center py-10 text-gray-500">
                   {searchTerm ? t('admin.inventory.no_search_results') : t('admin.inventory.no_products')}
                 </td>
               </tr>
             ) : (
-              currentProducts.map((product) => ( // Use currentProducts for display
+              currentProducts.map((product) => (
                 <tr key={product.id} className="hover:bg-gray-50">
+                  {/* New Image column cell */}
+                  <td className="px-3 py-2 border-b border-gray-200 text-sm">
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.name} // Use product name as alt text
+                        className="h-10 w-10 object-cover rounded" // Basic styling for thumbnail
+                        onError={(e) => (e.currentTarget.style.display = 'none')} // Hide if image fails to load
+                      />
+                    ) : (
+                      <span className="text-gray-400 text-xs">{t('common.none', 'None')}</span> // Display 'None' if no image
+                    )}
+                  </td>
                   <td className="px-5 py-4 border-b border-gray-200 text-sm">{product.name}</td>
-                  <td className="px-5 py-4 border-b border-gray-200 text-sm">{product.brand || t('common.not_applicable')}</td> {/* Use common N/A key */}
-                  <td className="px-5 py-4 border-b border-gray-200 text-sm">{product.category || t('common.not_applicable')}</td> {/* Use common N/A key */}
+                  <td className="px-5 py-4 border-b border-gray-200 text-sm">{product.brand || t('common.not_applicable')}</td>
+                  <td className="px-5 py-4 border-b border-gray-200 text-sm">{product.category || t('common.not_applicable')}</td>
                   <td className="px-5 py-4 border-b border-gray-200 text-sm text-right">${product.sale_price.toFixed(2)}</td> {/* Currency formatting might need localization later */}
                   <td className="px-5 py-4 border-b border-gray-200 text-sm text-right">{product.quantity_on_hand}</td>
                   <td className="px-5 py-4 border-b border-gray-200 text-sm text-right">{product.reorder_level || t('common.not_applicable')}</td> {/* Use common N/A key */}

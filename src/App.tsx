@@ -21,6 +21,8 @@ import CustomerLogin from './pages/CustomerLogin'; // Import customer login
  import ProtectedRoute from './components/ProtectedRoute'; // Added ProtectedRoute import
  import CustomerProtectedRoute from './components/CustomerProtectedRoute'; // Import customer protected route
  import MyBookings from './pages/MyBookings'; // Import MyBookings page
+ import Inventory from './pages/Inventory'; // Import the new public Inventory page
+ import ProductDetail from './pages/ProductDetail'; // Import ProductDetail page
  import { Toaster } from 'react-hot-toast'; // Import Toaster
  import './i18n/i18n';
 
@@ -57,6 +59,8 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/inventory" element={<Inventory />} />
+          <Route path="/product/:categorySlug/:productSlug" element={<ProductDetail />} /> {/* Updated Product Detail route */}
            {/* Protected Customer Route */}
            <Route element={<CustomerProtectedRoute />}>
              <Route path="/book" element={<BookingPortal />} />
