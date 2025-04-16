@@ -9,7 +9,7 @@ export const Home = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: 'url("https://images.unsplash.com/photo-1585747860715-2ba37e788b70?ixlib=rb-1.2.1&auto=format&fit=crop&w=2070&q=80")',
+          backgroundImage: 'url("https://i.postimg.cc/cL6q6wKh/24fef006-d343-4989-9c6d-f1822b98fa69.png")',
         }}
       >
         <div className="absolute inset-0 bg-black/50"></div>

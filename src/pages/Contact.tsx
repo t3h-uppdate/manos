@@ -32,11 +32,13 @@ export const Contact = () => {
     }
   };
 
+  // Removed pt-16 and min-h-screen from the top-level div.
+  // The parent <main> in App.tsx handles the layout flow and padding.
   return (
-    <div className="pt-16 min-h-screen bg-gray-50">
+    <div className="bg-gray-50 flex-grow"> {/* Use flex-grow if needed, or just let content dictate height */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-4xl font-serif text-center mb-12">{t('contact.title')}</h1>
-        
+
         <div className="grid md:grid-cols-2 gap-12">
           <div>
             <div className="bg-white p-6 rounded-lg shadow-md mb-8">

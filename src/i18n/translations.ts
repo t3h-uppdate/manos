@@ -10,11 +10,17 @@ export const translations = {
       my_bookings: 'My Bookings',
       login: 'Login', // Added
       register: 'Register', // Added
-      logout: 'Logout' // Added
+      logout: 'Logout', // Added
+      adminDashboard: 'Admin Dashboard' // Added
     },
     home: {
       welcome: 'Welcome to Manos Barber Shop',
       subtitle: 'Where Style Meets Tradition'
+    },
+    about: { // Added About section
+      title: 'About Manos',
+      paragraph1: 'Manos is more than just a place to get a haircut; it\'s an experience rooted in tradition and dedicated to modern style. We believe in providing top-notch service in a welcoming atmosphere.',
+      paragraph2: 'Our skilled barbers are passionate about their craft and committed to helping you look and feel your best. Come visit us and discover the Manos difference.'
     },
     contact: {
       title: 'Contact Us',
@@ -30,7 +36,8 @@ export const translations = {
       }
     },
     footer: {
-      followUs: 'Follow Us'
+      followUs: 'Follow Us',
+      allRightsReserved: 'All Rights Reserved' // Added
     },
     my_bookings: { // Added My Bookings section
       title: 'My Bookings',
@@ -449,11 +456,17 @@ export const translations = {
       my_bookings: 'حجوزاتي',
       login: 'تسجيل الدخول', // Added
       register: 'تسجيل', // Added
-      logout: 'تسجيل الخروج' // Added
+      logout: 'تسجيل الخروج', // Added
+      adminDashboard: 'لوحة تحكم المشرف' // Added
     },
     home: {
       welcome: 'مرحباً بكم في صالون مانوس',
       subtitle: 'حيث يلتقي الأسلوب بالتقاليد'
+    },
+    about: { // Added About section (Arabic)
+      title: 'عن مانوس',
+      paragraph1: 'مانوس هو أكثر من مجرد مكان للحصول على قصة شعر؛ إنها تجربة متجذرة في التقاليد ومكرسة للأسلوب الحديث. نؤمن بتقديم خدمة عالية الجودة في جو ترحيبي.',
+      paragraph2: 'حلاقونا الماهرون شغوفون بمهنتهم وملتزمون بمساعدتك على الظهور والشعور بأفضل حال. تعال لزيارتنا واكتشف الفرق في مانوس.'
     },
     contact: {
       title: 'اتصل بنا',
@@ -469,7 +482,8 @@ export const translations = {
       }
     },
     footer: {
-      followUs: 'تابعنا'
+      followUs: 'تابعنا',
+      allRightsReserved: 'جميع الحقوق محفوظة' // Added
     },
     my_bookings: { // Added My Bookings section
       title: 'حجوزاتي',

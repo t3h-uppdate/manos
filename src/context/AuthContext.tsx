@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabaseClient'; // Adjust path if needed
 export interface AuthContextType {
   session: Session | null;
   user: User | null;
+  isAdmin: boolean; // Added isAdmin flag
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -21,13 +22,17 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false); // Added isAdmin state
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      const currentUser = session?.user ?? null;
       setSession(session);
-      setUser(session?.user ?? null);
+      setUser(currentUser);
+      // Check for admin role in app_metadata
+      setIsAdmin(currentUser?.app_metadata?.role === 'Admin');
       setLoading(false);
     });
 
@@ -35,8 +40,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         console.log("Auth state changed:", _event, session);
+        const currentUser = session?.user ?? null;
         setSession(session);
-        setUser(session?.user ?? null);
+        setUser(currentUser);
+        // Update admin status on auth change
+        setIsAdmin(currentUser?.app_metadata?.role === 'Admin');
         // No need to set loading false here again, initial load is done
       }
     );
@@ -60,6 +68,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value = {
     session,
     user,
+    isAdmin, // Include isAdmin in the context value
     loading,
     signOut,
   };

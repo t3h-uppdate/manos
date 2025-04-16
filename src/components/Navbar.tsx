@@ -7,7 +7,7 @@ import { useAuth } from '../hooks/useAuth'; // Corrected import path
 export const Navbar = () => {
   const { t, i18n } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-  const { user, signOut, loading } = useAuth(); // Get user and signOut from context
+  const { user, signOut, loading, isAdmin } = useAuth(); // Get user, signOut, isAdmin from context
   const navigate = useNavigate(); // Hook for navigation after logout
 
   const handleLogout = async () => {
@@ -73,6 +73,10 @@ export const Navbar = () => {
                    {/* Display user info (e.g., email) - can be enhanced */}
                    <span className="text-gray-700 text-sm hidden lg:block" title={user.email}>{user.email?.split('@')[0]}</span> {/* Show partial email */}
                    <NavLink to="/my-bookings" className={getNavLinkClass}>{t('navigation.my_bookings')}</NavLink> {/* Use translation */}
+                   {/* Conditionally render Admin Dashboard link */}
+                   {isAdmin && (
+                     <NavLink to="/admin/" className={getNavLinkClass}>{t('navigation.adminDashboard')}</NavLink>
+                   )}
                    <button
                      onClick={handleLogout}
                      className="flex items-center text-gray-700 hover:text-gold-600"
@@ -146,6 +150,10 @@ export const Navbar = () => {
                       user ? (
                         <>
                           <NavLink to="/my-bookings" onClick={handleMobileLinkClick} className={getMobileNavLinkClass}>{t('navigation.my_bookings')}</NavLink>
+                          {/* Conditionally render Admin Dashboard link (Mobile) */}
+                          {isAdmin && (
+                            <NavLink to="/admin/dashboard" onClick={handleMobileLinkClick} className={getMobileNavLinkClass}>{t('navigation.adminDashboard')}</NavLink>
+                          )}
                           <button
                             onClick={() => { handleLogout(); handleMobileLinkClick(); }}
                             className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900"

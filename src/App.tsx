@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom
 import { Home } from './pages/Home';
 import { Contact } from './pages/Contact';
 import { BookingPortal } from './pages/BookingPortal'; // Import BookingPortal
+import About from './pages/About'; // Import About page (default import)
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import AdminLayout from './components/admin/Layout'; // Renamed import for clarity
@@ -30,7 +31,7 @@ import CustomerLogin from './pages/CustomerLogin'; // Import customer login
 const MainLayout: React.FC = () => (
   <div className="min-h-screen flex flex-col">
     <Navbar />
-    <main className="flex-grow">
+    <main className="flex-grow pt-16"> {/* Added pt-16 for fixed navbar */}
       <Outlet /> {/* Child routes will render here */}
     </main>
     <Footer />
@@ -60,6 +61,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/inventory" element={<Inventory />} />
+          <Route path="/about" element={<About />} /> {/* Add About route */}
           <Route path="/product/:categorySlug/:productSlug" element={<ProductDetail />} /> {/* Updated Product Detail route */}
            {/* Protected Customer Route */}
            <Route element={<CustomerProtectedRoute />}>

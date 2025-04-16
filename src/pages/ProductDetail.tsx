@@ -3,8 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { fetchProductBySlug, Product } from '../lib/inventoryApi';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { Navbar } from '../components/Navbar';
-import { Footer } from '../components/Footer';
+// Removed Navbar and Footer imports as they are handled by MainLayout
 
 // Define the expected URL parameters
 interface ProductDetailParams extends Record<string, string | undefined> {
@@ -55,10 +54,11 @@ const ProductDetail: React.FC = () => {
     // Depend on productSlug for re-fetching if the product part of the URL changes
   }, [productSlug, categorySlug, t]); // Include categorySlug in deps array for completeness, though not used for fetch
 
+  // This component renders inside the <main> element of MainLayout
+  // Remove the redundant Navbar, Footer, min-h-screen, and <main> tag
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar />
-      <main className="flex-grow container mx-auto px-4 py-8">
+    // Use a fragment or a simple div container for the page content
+    <div className="container mx-auto px-4 py-8"> {/* Apply container/padding directly */}
         {/* Back link */}
         <div className="mb-6">
           <Link to="/inventory" className="text-indigo-600 hover:text-indigo-800 hover:underline">
@@ -164,9 +164,14 @@ const ProductDetail: React.FC = () => {
            </div>
          )}
 
-      </main>
-      <Footer />
-    </div>
+         {!loading && !error && !product && (
+           // This case handles when loading is done, no error occurred, but product is still null (e.g., slug was invalid but didn't throw error)
+           <div className="text-center text-gray-500 py-10">
+             {t('product_detail.errors.not_found', 'Product not found.')}
+           </div>
+         )}
+
+    </div> // Close the main container div
   );
 };
 
