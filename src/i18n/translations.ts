@@ -6,6 +6,7 @@ export const translations = {
       contact: 'Contact Us',
       findUs: 'Find Us',
       book_now: 'Book Now', // Added
+      inventory: 'Inventory', // Added
       my_bookings: 'My Bookings',
       login: 'Login', // Added
       register: 'Register', // Added
@@ -444,6 +445,7 @@ export const translations = {
       contact: 'اتصل بنا',
       findUs: 'موقعنا',
       book_now: 'احجز الآن', // Added
+      inventory: 'المخزن', // Added
       my_bookings: 'حجوزاتي',
       login: 'تسجيل الدخول', // Added
       register: 'تسجيل', // Added
@@ -590,7 +592,7 @@ export const translations = {
         }
       },
       inventory: { // Added inventory section
-        title: 'إدارة المخزون',
+        title: 'إدارة المخزن',
         add_button: 'إضافة منتج جديد',
         search_placeholder: 'البحث بالاسم، العلامة التجارية، الفئة...',
         no_products: 'لم يتم العثور على منتجات.',
@@ -866,7 +868,7 @@ export const translations = {
         calendar: 'التقويم',
         bookings: 'الحجوزات',
         customers: 'العملاء',
-        inventory: 'المخزون',
+        inventory: 'المخزن',
         services: 'الخدمات',
         staff: 'الموظفون', // Added staff key
         messages: 'الرسائل',

@@ -45,15 +45,26 @@ export const Navbar = () => {
           <div className="hidden md:flex items-center space-x-8">
             <NavLink to="/" className={getNavLinkClass} end>{t('navigation.home')}</NavLink>
             <NavLink to="/about" className={getNavLinkClass}>{t('navigation.about')}</NavLink>
-            <NavLink to="/book" className={getNavLinkClass}>{t('navigation.book_now')}</NavLink> {/* Use translation */}
             <NavLink to="/contact" className={getNavLinkClass}>{t('navigation.contact')}</NavLink>
-            {/* Find Us Button - Assuming it links to contact for now */}
+            <NavLink to="/inventory" className={getNavLinkClass}>{t('navigation.inventory')}</NavLink> {/* Added Inventory */}
+            {/* Find Us Button */}
             <Link
               to="/contact#find-us" // Example: Link to a section in contact page
               className="bg-gold-600 text-white px-4 py-2 rounded hover:bg-gold-700 transition" // Use theme colors
             >
               {t('navigation.findUs')}
-            </Link> {/* Corrected closing tag */}
+            </Link>
+            {/* Book Now Button */}
+            <NavLink
+              to="/book"
+              className="bg-gold-600 text-white px-4 py-2 rounded hover:bg-gold-700 transition" // Styled as button
+            >
+              {t('navigation.book_now')}
+            </NavLink>
+
+            <button onClick={toggleLanguage} className="text-gray-700 hover:text-gold-600"> {/* Added hover */}
+              <Globe className="w-5 h-5" />
+            </button>
 
             {/* Conditional Auth Links */}
             {!loading && ( // Don't show links until auth state is loaded
@@ -78,10 +89,6 @@ export const Navbar = () => {
                )
             )}
             {/* End Conditional Auth Links */}
-
-            <button onClick={toggleLanguage} className="text-gray-700">
-              <Globe className="w-5 h-5" />
-            </button>
           </div>
 
           <button
@@ -96,39 +103,67 @@ export const Navbar = () => {
           <div className="md:hidden">
             {/* Mobile Menu */}
             <div className="px-2 pt-2 pb-3 space-y-1">
-                {/* Use NavLink for mobile too */}
-              <NavLink to="/" onClick={handleMobileLinkClick} className={({isActive}) => `block px-3 py-2 rounded-md text-base font-medium ${isActive ? 'bg-gold-50 text-gold-700' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'}`} end>{t('navigation.home')}</NavLink>
-              <NavLink to="/about" onClick={handleMobileLinkClick} className={({isActive}) => `block px-3 py-2 rounded-md text-base font-medium ${isActive ? 'bg-gold-50 text-gold-700' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'}`}>{t('navigation.about')}</NavLink>
-              <NavLink to="/book" onClick={handleMobileLinkClick} className={({isActive}) => `block px-3 py-2 rounded-md text-base font-medium ${isActive ? 'bg-gold-50 text-gold-700' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'}`}>{t('navigation.book_now')}</NavLink> {/* Use translation */}
-              <NavLink to="/contact" onClick={handleMobileLinkClick} className={({isActive}) => `block px-3 py-2 rounded-md text-base font-medium ${isActive ? 'bg-gold-50 text-gold-700' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'}`}>{t('navigation.contact')}</NavLink>
+              {/* Base class for mobile links */}
+              {(() => {
+                const mobileBaseClass = "block px-3 py-2 rounded-md text-base font-medium";
+                const mobileActiveClass = "bg-gold-50 text-gold-700";
+                const mobileInactiveClass = "text-gray-700 hover:bg-gray-50 hover:text-gray-900";
+                const mobileButtonClass = "block w-full text-center px-3 py-2 rounded-md text-base font-medium bg-gold-600 text-white hover:bg-gold-700 transition"; // Button style
+                const getMobileNavLinkClass = ({ isActive }: { isActive: boolean }) => `${mobileBaseClass} ${isActive ? mobileActiveClass : mobileInactiveClass}`;
 
-              {/* Conditional Auth Links (Mobile) */}
-              {!loading && (
-                 user ? (
-                    <>
-                      <NavLink to="/my-bookings" onClick={handleMobileLinkClick} className={({isActive}) => `block px-3 py-2 rounded-md text-base font-medium ${isActive ? 'bg-gold-50 text-gold-700' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'}`}>{t('navigation.my_bookings')}</NavLink> {/* Use translation */}
-                      <button
-                        onClick={() => { handleLogout(); handleMobileLinkClick(); }}
-                        className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                      >
-                        {t('navigation.logout')} ({user.email?.split('@')[0]}) {/* Use translation */}
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <NavLink to="/login" onClick={handleMobileLinkClick} className={({isActive}) => `block px-3 py-2 rounded-md text-base font-medium ${isActive ? 'bg-gold-50 text-gold-700' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'}`}>{t('navigation.login')}</NavLink>
-                      <NavLink to="/register" onClick={handleMobileLinkClick} className={({isActive}) => `block px-3 py-2 rounded-md text-base font-medium ${isActive ? 'bg-gold-50 text-gold-700' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'}`}>{t('navigation.register')}</NavLink>
-                    </>
-                  )
-              )}
-              {/* End Conditional Auth Links (Mobile) */}
+                return (
+                  <>
+                    <NavLink to="/" onClick={handleMobileLinkClick} className={getMobileNavLinkClass} end>{t('navigation.home')}</NavLink>
+                    <NavLink to="/about" onClick={handleMobileLinkClick} className={getMobileNavLinkClass}>{t('navigation.about')}</NavLink>
+                    <NavLink to="/contact" onClick={handleMobileLinkClick} className={getMobileNavLinkClass}>{t('navigation.contact')}</NavLink>
+                    <NavLink to="/inventory" onClick={handleMobileLinkClick} className={getMobileNavLinkClass}>{t('navigation.inventory')}</NavLink> {/* Added Inventory */}
+                    {/* Find Us Button (Mobile) - Links to contact page section */}
+                    <Link
+                      to="/contact#find-us"
+                      onClick={handleMobileLinkClick}
+                      className={mobileButtonClass} // Button style
+                    >
+                      {t('navigation.findUs')}
+                    </Link>
+                    {/* Book Now Button (Mobile) */}
+                    <NavLink
+                      to="/book"
+                      onClick={handleMobileLinkClick}
+                      className={mobileButtonClass} // Button style
+                    >
+                      {t('navigation.book_now')}
+                    </NavLink>
 
-              <button
-                className="block w-full text-left px-3 py-2 text-gray-700"
-                onClick={() => { toggleLanguage(); handleMobileLinkClick(); }}
-              >
-                {i18n.language === 'en' ? 'العربية' : 'English'}
-              </button>
+                    <button
+                      className="block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-gray-900" // Standard text button style
+                      onClick={() => { toggleLanguage(); handleMobileLinkClick(); }}
+                    >
+                      {i18n.language === 'en' ? 'العربية' : 'English'}
+                    </button>
+
+                    {/* Conditional Auth Links (Mobile) */}
+                    {!loading && (
+                      user ? (
+                        <>
+                          <NavLink to="/my-bookings" onClick={handleMobileLinkClick} className={getMobileNavLinkClass}>{t('navigation.my_bookings')}</NavLink>
+                          <button
+                            onClick={() => { handleLogout(); handleMobileLinkClick(); }}
+                            className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                          >
+                            {t('navigation.logout')} ({user.email?.split('@')[0]})
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <NavLink to="/login" onClick={handleMobileLinkClick} className={getMobileNavLinkClass}>{t('navigation.login')}</NavLink>
+                          <NavLink to="/register" onClick={handleMobileLinkClick} className={getMobileNavLinkClass}>{t('navigation.register')}</NavLink>
+                        </>
+                      )
+                    )}
+                    {/* End Conditional Auth Links (Mobile) */}
+                  </>
+                );
+              })()}
             </div>
           </div>
         )}
