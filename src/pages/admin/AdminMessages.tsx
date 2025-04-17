@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react'; // Import useMemo
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabaseClient';
 import { toast } from 'react-hot-toast';
-import Modal from '../../components/Modal';
-import { ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react'; // Import icons
+import { ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Mail, Archive, Trash2, Check, RefreshCcw, ChevronUp, ChevronDown } from 'lucide-react';
 
 // Define the Message type based on your Supabase schema
 interface Message {
@@ -36,6 +35,9 @@ const AdminMessages: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // Or make this configurable later
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set()); // State for expanded messages
+  const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
+  const [selectAll, setSelectAll] = useState(false);
+  const [expandedMessageId, setExpandedMessageId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -160,7 +162,6 @@ const AdminMessages: React.FC = () => {
     }
   };
 
-
   // Function to handle sorting
   const handleSort = (column: keyof Message) => {
     if (sortColumn === column) {
@@ -172,9 +173,11 @@ const AdminMessages: React.FC = () => {
   };
 
   // Function to handle viewing a message
-  const handleView = (message: Message) => {
-    setSelectedMessage(message);
-    setIsViewModalOpen(true);
+  const toggleMessageView = (message: Message) => {
+    setExpandedMessageId(expandedMessageId === message.id ? null : message.id);
+    if (message.status === 'unread') {
+      handleStatusChange(message.id, 'read');
+    }
   };
 
   // Function to handle deleting a message
@@ -214,103 +217,284 @@ const AdminMessages: React.FC = () => {
     return sortDirection === 'asc' ? <ArrowUp className="inline w-4 h-4 ml-1" /> : <ArrowDown className="inline w-4 h-4 ml-1" />;
   };
 
-  return (
-    <div>
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6">{t('admin.messages.title')}</h1>
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedMessages(new Set());
+    } else {
+      setSelectedMessages(new Set(paginatedMessages.map(msg => msg.id)));
+    }
+    setSelectAll(!selectAll);
+  };
 
-      {/* Filtering Controls */}
-      <div className="mb-4 flex justify-end">
-         <div className="flex items-center space-x-2">
-           <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">
-             {t('admin.messages.filter_by_status')}:
-           </label>
-           <select
-             id="status-filter"
-             value={filterStatus}
-             onChange={(e) => setFilterStatus(e.target.value)}
-             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-           >
-             <option value="all">{t('admin.messages.filter_options.all')}</option>
-             <option value="unread">{t('admin.messages.status.unread')}</option>
-             <option value="read">{t('admin.messages.status.read')}</option>
-             <option value="archived">{t('admin.messages.status.archived')}</option>
-           </select>
-         </div>
+  const handleSelectMessage = (messageId: string) => {
+    setSelectedMessages(prev => {
+      const newSelected = new Set(prev);
+      if (newSelected.has(messageId)) {
+        newSelected.delete(messageId);
+      } else {
+        newSelected.add(messageId);
+      }
+      return newSelected;
+    });
+  };
+
+  const handleBulkAction = async (action: 'read' | 'unread' | 'archived' | 'delete') => {
+    if (selectedMessages.size === 0) return;
+
+    if (action === 'delete' && !window.confirm(t('admin.messages.confirm_bulk_delete'))) {
+      return;
+    }
+
+    const toastId = toast.loading(t('admin.messages.updating'));
+    try {
+      if (action === 'delete') {
+        const { error } = await supabase
+          .from('messages')
+          .delete()
+          .in('id', Array.from(selectedMessages));
+        if (error) throw error;
+        setAllMessages(prev => prev.filter(msg => !selectedMessages.has(msg.id)));
+      } else {
+        const { error } = await supabase
+          .from('messages')
+          .update({ status: action })
+          .in('id', Array.from(selectedMessages));
+        if (error) throw error;
+        setAllMessages(prev => prev.map(msg => 
+          selectedMessages.has(msg.id) ? { ...msg, status: action } : msg
+        ));
+      }
+      setSelectedMessages(new Set());
+      setSelectAll(false);
+      toast.success(t('admin.messages.notifications.bulk_updated'), { id: toastId });
+    } catch (err) {
+      console.error("Error performing bulk action:", err);
+      toast.error(t('admin.messages.errors.bulk_action'), { id: toastId });
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-gray-50">
+      {/* Toolbar */}
+      <div className="bg-white border-b px-4 py-2 flex items-center space-x-4">
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            checked={selectAll}
+            onChange={handleSelectAll}
+            className="h-4 w-4 text-indigo-600 rounded border-gray-300 cursor-pointer"
+          />
+        </div>
+        
+        <div className="flex items-center space-x-2 border-l pl-4">
+          <button
+            onClick={() => handleBulkAction('read')}
+            disabled={selectedMessages.size === 0}
+            className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-50"
+            title={t('admin.messages.actions.mark_read')}
+          >
+            <Mail className="w-5 h-5 text-gray-600" />
+          </button>
+          <button
+            onClick={() => handleBulkAction('unread')}
+            disabled={selectedMessages.size === 0}
+            className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-50"
+            title={t('admin.messages.actions.mark_unread')}
+          >
+            <Mail className="w-5 h-5 text-gray-600 fill-current" />
+          </button>
+          <button
+            onClick={() => handleBulkAction('archived')}
+            disabled={selectedMessages.size === 0}
+            className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-50"
+            title={t('admin.messages.actions.archive')}
+          >
+            <Archive className="w-5 h-5 text-gray-600" />
+          </button>
+          <button
+            onClick={() => handleBulkAction('delete')}
+            disabled={selectedMessages.size === 0}
+            className="p-2 hover:bg-gray-100 rounded-full disabled:opacity-50"
+            title={t('common.delete')}
+          >
+            <Trash2 className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
+
+        <div className="flex items-center ml-auto space-x-4">
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+          >
+            <option value="all">{t('admin.messages.filter_options.all')}</option>
+            <option value="unread">{t('admin.messages.status.unread')}</option>
+            <option value="read">{t('admin.messages.status.read')}</option>
+            <option value="archived">{t('admin.messages.status.archive')}</option>
+          </select>
+          <button
+            onClick={() => window.location.reload()}
+            className="p-2 hover:bg-gray-100 rounded-full"
+            title={t('common.refresh')}
+          >
+            <RefreshCcw className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
       </div>
 
-
-      {loading && <p>{t('common.loading')}</p>}
-      {error && <p className="text-red-600 bg-red-100 p-3 rounded mb-4">{error}</p>}
-
-      {!loading && !error && (
-        <>
-          {/* Card View (All screens) */}
-          <div className="space-y-4">
+      {/* Messages List */}
+      <div className="flex-1 overflow-auto">
+        {loading && <p className="p-4">{t('common.loading')}</p>}
+        {error && <p className="text-red-600 bg-red-100 p-3 rounded m-4">{error}</p>}
+        
+        {!loading && !error && (
+          <div className="divide-y divide-gray-200">
             {paginatedMessages.length === 0 ? (
-               <div className="bg-white shadow-md rounded-lg p-4 text-center text-gray-500">
-                 {filterStatus === 'all' ? t('admin.messages.no_messages') : t('admin.messages.no_filtered_messages')}
-               </div>
-             ) : (
+              <div className="p-4 text-center text-gray-500">
+                {filterStatus === 'all' ? t('admin.messages.no_messages') : t('admin.messages.no_filtered_messages')}
+              </div>
+            ) : (
               paginatedMessages.map((message) => (
-                <div key={message.id} className={`bg-white shadow-md rounded-lg p-4 ${message.status === 'unread' ? 'border-l-4 border-yellow-400' : ''}`}>
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-lg font-semibold text-gray-900">{message.name}</span>
-                    <span className={`text-sm font-medium px-2 py-0.5 rounded-full capitalize ${
-                      message.status === 'unread' ? 'bg-yellow-100 text-yellow-800' :
-                      message.status === 'read' ? 'bg-green-100 text-green-800' :
-                      message.status === 'archived' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {t(`admin.messages.status.${message.status}`)}
-                    </span>
-                  </div>
-                  {message.email && (
-                    <p className="text-sm text-gray-600 mb-1">
-                      <span className="font-medium">{t('admin.messages.table.email')}:</span> {message.email}
-                    </p>
-                  )}
-                  {message.phone && (
-                    <p className="text-sm text-gray-600 mb-1">
-                      <span className="font-medium">{t('admin.messages.table.phone')}:</span> {message.phone}
-                    </p>
-                  )}
-                   <p className="text-sm text-gray-600 mb-2">
-                      <span className="font-medium">{t('admin.messages.table.received')}:</span> {formatDate(message.created_at)}
-                    </p>
-                  {/* Clickable message area with conditional clamping */}
-                  <p
-                    className={`text-sm text-gray-700 mb-3 cursor-pointer ${expandedMessages.has(message.id) ? 'whitespace-pre-wrap' : 'line-clamp-1'}`}
-                    onClick={() => toggleMessageExpansion(message.id)}
+                <div key={message.id}>
+                  {/* Message Header */}
+                  <div 
+                    className={`group flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer
+                      ${message.status === 'unread' ? 'font-semibold bg-white' : 'bg-gray-50'}
+                      ${selectedMessages.has(message.id) ? 'bg-blue-50 hover:bg-blue-50' : ''}
+                      ${expandedMessageId === message.id ? 'bg-white shadow-sm' : ''}`}
+                    onClick={(e) => {
+                      if ((e.target as HTMLElement).closest('.checkbox-area, .action-buttons')) return;
+                      toggleMessageView(message);
+                    }}
                   >
-                    {message.message}
-                  </p>
+                    <div className="checkbox-area flex items-center w-8">
+                      <input
+                        type="checkbox"
+                        checked={selectedMessages.has(message.id)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          handleSelectMessage(message.id);
+                        }}
+                        className="h-4 w-4 text-indigo-600 rounded border-gray-300 cursor-pointer"
+                      />
+                    </div>
+                    
+                    <div className="flex-1 min-w-0 ml-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-medium">{message.name}</span>
+                          {expandedMessageId === message.id ? (
+                            <ChevronUp className="w-4 h-4 text-gray-400" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4 text-gray-400" />
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-500">{formatDate(message.created_at)}</span>
+                      </div>
+                      {!expandedMessageId && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <span className="truncate">{message.message}</span>
+                        </div>
+                      )}
+                    </div>
 
-                   {/* Actions */}
-                   <div className="flex flex-wrap gap-2 justify-end border-t pt-3 mt-3">
-                     <button onClick={() => handleView(message)} className="text-sm text-indigo-600 hover:text-indigo-900">{t('common.view')}</button>
-                     {message.status === 'unread' ? (
-                        <button onClick={() => handleStatusChange(message.id, 'read')} className="text-sm text-green-600 hover:text-green-900">{t('admin.messages.actions.mark_read')}</button>
-                     ) : (
-                        <button onClick={() => handleStatusChange(message.id, 'unread')} className="text-sm text-yellow-600 hover:text-yellow-900">{t('admin.messages.actions.mark_unread')}</button>
-                     )}
-                     {message.status !== 'archived' && (
-                       <button onClick={() => handleStatusChange(message.id, 'archived')} className="text-sm text-blue-600 hover:text-blue-900">{t('admin.messages.actions.archive')}</button>
-                     )}
-                     <button onClick={() => handleDelete(message.id)} className="text-sm text-red-600 hover:text-red-900">{t('common.delete')}</button>
+                    <div className="action-buttons ml-4 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      {message.status === 'unread' ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStatusChange(message.id, 'read');
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded-full"
+                        >
+                          <Check className="w-4 h-4 text-gray-600" />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStatusChange(message.id, 'unread');
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded-full"
+                          title={t('admin.messages.actions.mark_unread')}
+                        >
+                          <Mail className="w-4 h-4 text-gray-600 fill-current" />
+                        </button>
+                      )}
+                      {message.status !== 'archived' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStatusChange(message.id, 'archived');
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded-full"
+                        >
+                          <Archive className="w-4 h-4 text-gray-600" />
+                        </button>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(message.id);
+                        }}
+                        className="p-1 hover:bg-gray-200 rounded-full ml-1"
+                      >
+                        <Trash2 className="w-4 h-4 text-gray-600" />
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Expanded Message View */}
+                  {expandedMessageId === message.id && (
+                    <div className="px-12 py-6 bg-white border-b">
+                      <div className="space-y-6 max-w-full">
+                        <div className="flex items-start justify-between">
+                          <div className="min-w-0 flex-1">
+                            <h2 className="text-xl font-medium text-gray-900 truncate">{message.name}</h2>
+                            <div className="mt-1 text-sm text-gray-500">
+                              {message.email && (
+                                <div className="flex items-center space-x-1">
+                                  <span>Email:</span>
+                                  <a href={`mailto:${message.email}`} className="text-blue-600 hover:underline break-all">
+                                    {message.email}
+                                  </a>
+                                </div>
+                              )}
+                              {message.phone && (
+                                <div className="flex items-center space-x-1 mt-1">
+                                  <span>Phone:</span>
+                                  <a href={`tel:${message.phone}`} className="text-blue-600 hover:underline">
+                                    {message.phone}
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-500 flex-shrink-0 ml-4">
+                            {formatDate(message.created_at)}
+                          </div>
+                        </div>
+
+                        <div className="prose prose-sm max-w-none text-gray-700 break-words whitespace-pre-wrap overflow-x-hidden">
+                          {message.message}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))
             )}
           </div>
-        </>
-      )}
+        )}
+      </div>
 
-      {/* Pagination Controls */}
+      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-4 flex justify-between items-center">
+        <div className="border-t bg-white px-4 py-2 flex justify-between items-center">
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronLeft className="inline w-4 h-4 mr-1" />
             {t('common.previous')}
@@ -321,48 +505,12 @@ const AdminMessages: React.FC = () => {
           <button
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('common.next')}
             <ChevronRight className="inline w-4 h-4 ml-1" />
           </button>
         </div>
-      )}
-
-
-      {/*  ModalView Message */}
-      {selectedMessage && (
-        <Modal
-          isOpen={isViewModalOpen}
-          onClose={() => setIsViewModalOpen(false)}
-          title={t('admin.messages.view_modal.title')}
-        >
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm font-medium text-gray-500">{t('admin.messages.table.from')}</p>
-              <p className="text-lg text-gray-900">{selectedMessage.name}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">{t('admin.messages.table.email')}</p>
-              <p className="text-lg text-gray-900">{selectedMessage.email || t('common.not_available')}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">{t('admin.messages.table.phone')}</p>
-              <p className="text-lg text-gray-900">{selectedMessage.phone || t('common.not_available')}</p>
-            </div>
-             <div>
-              <p className="text-sm font-medium text-gray-500">{t('admin.messages.table.received')}</p>
-              <p className="text-lg text-gray-900">{formatDate(selectedMessage.created_at)}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">{t('admin.messages.table.message')}</p>
-              {/* Add a scrollable container for the message */}
-              <div className="max-h-60 overflow-y-auto border rounded p-2 mt-1 bg-gray-50">
-                <p className="text-base text-gray-900 whitespace-pre-wrap">{selectedMessage.message}</p>
-              </div>
-            </div>
-          </div>
-        </Modal>
       )}
     </div>
   );

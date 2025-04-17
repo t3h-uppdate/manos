@@ -1,361 +1,524 @@
-import React, { useState, useEffect } from 'react'; // Removed useLayoutEffect
-import { useNavigate, useLocation, Link } from 'react-router-dom'; // Import useNavigate, useLocation, and Link
-import { useTranslation } from 'react-i18next'; // Import useTranslation
-import DatePicker from 'react-datepicker'; // Import DatePicker
-import 'react-datepicker/dist/react-datepicker.css'; // Import default styles
-// Import API functions to fetch services, staff, availability, and create bookings
-import { fetchStaffAvailability, AvailableSlot } from '../lib/availabilityApi'; // Import availability API and type
-import { createBooking, NewBookingData } from '../lib/bookingApi'; // Import booking API and type
-import { findOrCreateCustomer } from '../lib/customerApi'; // Import customer API
-import { useAuth } from '../hooks/useAuth'; // Updated import path for useAuth
-import Modal from '../components/Modal'; // Import the Modal component
-// Removed serviceApi import
-// TODO: Import necessary types (Service, Staff, Booking etc.)
-// TODO: Import components for displaying services, calendar/time slots, forms
-
-// Removed Service type import
-
-// Define a default duration in minutes for fetching slots and calculating end time
-const DEFAULT_APPOINTMENT_DURATION = 30; // Changed from 60
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { fetchStaffAvailability, AvailableSlot } from '../lib/availabilityApi';
+import { createBooking, NewBookingData } from '../lib/bookingApi';
+import { fetchServices, Service } from '../lib/serviceApi';
+import { fetchActiveStaff, Staff, fetchStaffByService } from '../lib/staffApi'; // Import staff API
+import { findOrCreateCustomer } from '../lib/customerApi';
+import { useAuth } from '../hooks/useAuth';
+import Modal from '../components/Modal';
 
 const BookingPortal: React.FC = () => {
-  const { t } = useTranslation(); // Initialize translation hook
-  const { user, loading: authLoading } = useAuth(); // Get user state
-  const navigate = useNavigate(); // Get navigate function
-  const location = useLocation(); // Get location for redirect logic
-  const [step, setStep] = useState<number>(1); // 1: Select Time, 2: Enter Details, 3: Confirmation
-  // Removed services and selectedService state
-  const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]); // Use AvailableSlot type
-  const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null); // Use AvailableSlot type
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date()); // State for selected date, default to today
-  const [clientPhone, setClientPhone] = useState(''); // Keep phone state separate
-  const [clientMessage, setClientMessage] = useState(''); // State for the client's message
-  const [loading, setLoading] = useState<boolean>(false); // Loading state for API calls within the component
+  const { t } = useTranslation();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [step, setStep] = useState<number>(0); // Step 0: Select Service
+  const [services, setServices] = useState<Service[]>([]);
+  const [staff, setStaff] = useState<Staff[]>([]); // State for staff members
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null); // State for selected staff
+  const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [clientPhone, setClientPhone] = useState('');
+  const [clientMessage, setClientMessage] = useState('');
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [showAuthModal, setShowAuthModal] = useState<boolean>(false); // State for login/register modal
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
 
-  // Removed useEffect for fetching services
-
-  // Fetch availability when date is selected/changed
+  // Fetch services on component mount
   useEffect(() => {
-    // Only fetch if we have a selected date
-    if (selectedDate) {
+    const loadServices = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchServices();
+        setServices(data);
+      } catch (err) {
+        console.error('Failed to fetch services:', err);
+        setError(t('booking.errorLoadServices'));
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadServices();
+  }, [t]);
+
+  // Fetch availability when date, service, or staff changes
+  useEffect(() => {
+    if (selectedDate && selectedService) {
       const loadAvailability = async () => {
         setLoading(true);
         setError(null);
-        setSelectedSlot(null); // Clear previously selected slot when date changes
-        setAvailableSlots([]); // Clear previous slots list while loading new date
+        setSelectedSlot(null);
+        setAvailableSlots([]);
         try {
-          // Fetch availability for the specific selected date using the updated function signature
-          // Use the default duration since service selection is removed
           const slots = await fetchStaffAvailability(
-            DEFAULT_APPOINTMENT_DURATION, // Use default duration
-            selectedDate // Pass the selected date object
+            selectedService.duration_minutes,
+            selectedDate
           );
           setAvailableSlots(slots);
-          if (slots.length === 0) {
-              // Optionally set a specific message if no slots are found vs. an error
-              // setError("No available slots found for this date.");
-          }
         } catch (err) {
-          console.error("Failed to load availability:", err);
-          // Use translation key for error message
-          const message = err instanceof Error ? err.message : t('booking.errorLoadAvailability');
-          setError(message);
-          // toast.error(message);
+          console.error('Failed to load availability:', err);
+          setError(t('booking.errorLoadAvailability'));
         } finally {
           setLoading(false);
         }
       };
       loadAvailability();
-    } else {
-       // If no date selected, clear slots
-       setAvailableSlots([]);
     }
-    // Dependency array now only includes selectedDate
-  }, [selectedDate]);
+  }, [selectedDate, selectedService, selectedStaff, t]);
 
-  // Removed handleSelectService
+  const handleSelectService = async (service: Service) => {
+    setSelectedService(service);
+    // Reset staff selection when service changes
+    setSelectedStaff(null);
+    try {
+      // Fetch staff members who can provide this service
+      const availableStaff = await fetchStaffByService(service.id);
+      setStaff(availableStaff);
+    } catch (err) {
+      console.error('Failed to fetch staff for service:', err);
+      setError(t('booking.errorLoadStaff'));
+    }
+    setStep(1); // Move to Step 1 (Select Time)
+  };
 
-  const handleSelectSlot = (slot: AvailableSlot) => { // Update parameter type
+  const handleSelectSlot = (slot: AvailableSlot) => {
     if (!user) {
-      // If user is not logged in, show the modal instead of proceeding
       setShowAuthModal(true);
     } else {
-      // If user is logged in, proceed to the details step
       setSelectedSlot(slot);
-      setStep(2); // Move to step 2 (Enter Details)
+      setStep(2); // Move to Step 2 (Enter Details)
     }
   };
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check if user is logged in before submitting
     if (!user || !user.email) {
-        // Use translation key for error message
-        setError(t('booking.errorAuthRequired'));
-        navigate('/login?redirect=/book');
-        return;
+      setError(t('booking.errorAuthRequired'));
+      navigate('/login?redirect=/book');
+      return;
     }
 
-    // Check only for selectedSlot
-    if (!selectedSlot || !selectedSlot.datetime) {
-      // Use translation key for error message
+    if (!selectedSlot || !selectedSlot.datetime || !selectedService) {
       setError(t('booking.errorSelectSlot'));
       return;
     }
-    // Add validation for the message if required (e.g., not empty)
-    if (!clientMessage.trim()) {
-        // Use translation key for error message
-        setError(t('booking.errorEnterMessage'));
-        return; // Prevent submission if message is empty
-    }
-
 
     setLoading(true);
     setError(null);
 
     try {
-      // 1. Find or Create Customer using logged-in user's details
-      const customerName = user.user_metadata?.full_name || user.email.split('@')[0]; // Example fallback
-
-      // Ensure user is non-null here (already checked at function start)
-      if (!user) {
-          // Use translation key for internal error
-          throw new Error(t('booking.errorUserNotAuthInternal')); // Should not happen
-      }
-
+      const customerName = user.user_metadata?.full_name || user.email.split('@')[0];
       const customerId = await findOrCreateCustomer({
-          authUserId: user.id, // Pass the Supabase Auth User ID
-          name: customerName, // Use name from auth or fallback
-          email: user.email, // Use email from auth user
-          phone: clientPhone || null, // Use phone from state
+        authUserId: user.id,
+        name: customerName,
+        email: user.email,
+        phone: clientPhone || null,
       });
 
-      // 2. Calculate end time using the default duration
       const startTime = new Date(selectedSlot.datetime);
-      const endTime = new Date(startTime.getTime() + DEFAULT_APPOINTMENT_DURATION * 60000); // Use default duration
+      const endTime = new Date(startTime.getTime() + selectedService.duration_minutes * 60000);
 
-      // 3. Prepare Booking Data with customer_id, message, and null service_id
       const bookingData: NewBookingData = {
-        service_id: null, // Set service_id to null
-        staff_id: null, // Set staff_id to null for simplified booking
-        customer_id: customerId, // Use the retrieved/created customer ID from findOrCreateCustomer
+        service_id: selectedService.id,
+        staff_id: selectedStaff ? selectedStaff.id : null, // Include selected staff ID
+        customer_id: customerId,
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
-        message: clientMessage.trim(), // Include the client's message
-        // status: 'confirmed', // Handled by API function default
+        message: clientMessage.trim(),
       };
 
-      // 4. Create the Booking
       await createBooking(bookingData);
-      setStep(3); // Move to confirmation step (new Step 3)
+      setStep(3); // Move to Step 3 (Confirmation)
     } catch (err) {
-      console.error("Failed to create booking:", err);
-      // Use translation key for error message
-      const message = err instanceof Error ? err.message : t('booking.errorCreateBooking');
-      setError(message);
-      // Optionally add toast notification
-      // toast.error(message);
+      console.error('Failed to create booking:', err);
+      setError(t('booking.errorCreateBooking'));
     } finally {
       setLoading(false);
     }
   };
 
-  // Removed the useLayoutEffect that handled redirection for steps 2 & 3
-
   const renderStepContent = () => {
-    // Show loading indicator while checking auth state initially
     if (authLoading) {
-        // Use translation key
-        return <div className="text-center p-10">{t('booking.authenticating')}</div>;
+      return <div className="text-center p-10">{t('booking.authenticating')}</div>;
     }
 
-    // If we are in a protected step but the effect hasn't redirected yet (e.g., mid-render), render null
-     if ((step === 2 || step === 3) && !user) {
-        return null;
-     }
-
-    // Proceed with rendering steps if authenticated or if step doesn't require auth
-    // Use common loading key
-    if (loading && step !== 1) return <div className="text-center p-10">{t('common.loading')}</div>;
-    // Error is already potentially translated from API calls or validation checks
+    if (loading && step !== 0) return <div className="text-center p-10">{t('common.loading')}</div>;
     if (error) return <div className="text-center p-10 text-red-600">{error}</div>;
 
-
     switch (step) {
-      // Step 1 is now Select Time Slot
-      case 1:
+      case 0: // Step 0: Select Service
         return (
           <div>
-            {/* Use translation key */}
+            <h2 className="text-2xl font-semibold mb-4">{t('booking.selectServiceTitle')}</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {services.map((service) => (
+                <div
+                  key={service.id}
+                  className="p-4 border rounded shadow hover:shadow-lg cursor-pointer"
+                  onClick={() => handleSelectService(service)}
+                >
+                  <h3 className="text-lg font-bold">{service.name}</h3>
+                  <p className="text-sm text-gray-600">{service.description}</p>
+                  <p className="text-sm text-gray-800">
+                    {t('booking.duration')}: {service.duration_minutes} {t('booking.minutes')}
+                  </p>
+                  <p className="text-sm text-gray-800">
+                    {t('booking.price')}: ${service.price.toFixed(2)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case 1: // Step 1: Select Time Slot and Staff
+        return (
+          <div>
             <h2 className="text-2xl font-semibold mb-4">{t('booking.selectDateTimeTitle')}</h2>
-            {/* Removed Back button */}
-
-            {/* Date Picker */}
+            <button onClick={() => setStep(0)} className="mb-4 text-[#D4AF37] hover:underline">
+              {t('booking.backToServiceSelection')}
+            </button>
             <div className="mb-6">
-              {/* Use translation key */}
-              <label htmlFor="bookingDate" className="block text-sm font-medium text-gray-700 mb-1">{t('booking.selectDateLabel')}</label>
+              <label htmlFor="bookingDate" className="block text-sm font-medium text-gray-700 mb-1">
+                {t('booking.selectDateLabel')}
+              </label>
               <DatePicker
                 id="bookingDate"
                 selected={selectedDate}
                 onChange={(date: Date | null) => setSelectedDate(date)}
-                minDate={new Date()} // Prevent selecting past dates
-                inline // Display calendar directly on the page
-                className="p-2 border rounded" // Basic styling for input if not inline
+                minDate={new Date()}
+                inline
               />
             </div>
-
-            {/* Available Slots for Selected Date */}
-            {/* Use translation key with interpolation and fallback key */}
-            <h3 className="text-xl font-semibold mb-3">{t('booking.availableSlotsTitle', { date: selectedDate ? selectedDate.toLocaleDateString() : t('booking.selectedDateFallback') })}:</h3>
-            {loading ? ( // Show loading indicator when fetching slots
-                 <p>{/* Use translation key */}{t('booking.loadingSlots')}</p>
+            <div className="mb-6">
+              <label htmlFor="staffSelect" className="block text-sm font-medium text-gray-700 mb-1">
+                {t('booking.selectStaffLabel')}
+              </label>
+              <select
+                id="staffSelect"
+                value={selectedStaff?.id || ''}
+                onChange={(e) =>
+                  setSelectedStaff(staff.find((s) => s.id === Number(e.target.value)) || null)
+                }
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+              >
+                <option value="">{t('booking.anyStaff')}</option>
+                {staff.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <h3 className="text-xl font-semibold mb-3">
+              {t('booking.availableSlotsTitle', {
+                date: selectedDate ? selectedDate.toLocaleDateString() : t('booking.selectedDateFallback'),
+              })}
+            </h3>
+            {loading ? (
+              <p>{t('booking.loadingSlots')}</p>
             ) : availableSlots.length === 0 ? (
-              <p>{/* Use translation key */}{t('booking.noSlots')}</p>
+              <p>{t('booking.noSlots')}</p>
             ) : (
-              // Display simple list of time slots
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
-                 {/* Sort slots by time */}
-                 {availableSlots
-                    .sort((a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime())
-                    .map((slot) => (
-                      <button
-                        key={slot.datetime} // Use datetime as key
-                        onClick={() => handleSelectSlot(slot)}
-                        className="p-2 border rounded bg-gray-100 hover:bg-[#D4AF37]/20 text-center text-sm" // Update hover color
-                      >
-                        {/* Format time as HH-mm (24-hour) */}
-                        {`${String(new Date(slot.datetime).getHours()).padStart(2, '0')}-${String(new Date(slot.datetime).getMinutes()).padStart(2, '0')}`}
-                      </button>
-                 ))}
+                {availableSlots.map((slot) => (
+                  <button
+                    key={slot.datetime}
+                    onClick={() => handleSelectSlot(slot)}
+                    className="p-2 border rounded bg-gray-100 hover:bg-[#D4AF37]/20 text-center text-sm"
+                  >
+                    {new Date(slot.datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </button>
+                ))}
               </div>
             )}
           </div>
         );
-      // Step 2 is now Enter Details
-      case 2:
+      case 2: // Step 2: Enter Details
         return (
-          <div>
-            {/* Use translation key */}
+          <div className="max-w-2xl mx-auto">
             <h2 className="text-2xl font-semibold mb-4">{t('booking.enterDetailsTitle')}</h2>
-            {/* Use translation key */}
-            <button onClick={() => setStep(1)} className="mb-4 text-[#D4AF37] hover:text-[#B4941F] hover:underline">{t('booking.backToTimeSelection')}</button> {/* Update text color */}
-            {/* Removed service name */}
-            {/* Use translation keys for structure */}
-            <p className="mb-4">{t('booking.bookingAtPrefix')} <strong>{selectedSlot ? new Date(selectedSlot.datetime).toLocaleString() : ''}</strong>{t('booking.bookingAtSuffix')}</p>
-            {/* Display logged-in user email */}
-            {/* Use translation key with interpolation */}
-            <p className="mb-4 text-sm text-gray-600">{t('booking.bookingAs', { email: user?.email })}</p>
-            <form onSubmit={handleBookingSubmit} className="space-y-4 max-w-md mx-auto">
-              {/* Removed Name and Email fields */}
-              <div>
-                {/* Use translation key */}
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">{t('booking.phoneLabel')}</label>
-                <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={clientPhone}
-                    onChange={(e) => setClientPhone(e.target.value)} // Update phone state directly
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-[#D4AF37] focus:ring focus:ring-[#D4AF37] focus:ring-opacity-50" // Update focus style
-                />
+            <button 
+              onClick={() => setStep(1)} 
+              className="mb-6 text-[#D4AF37] hover:underline flex items-center"
+            >
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              {t('booking.backToTimeSelection')}
+            </button>
+
+            {/* Booking Summary */}
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
+              <h3 className="text-lg font-medium mb-3">{t('booking.bookingSummary')}</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{t('booking.service')}:</span>
+                  <span className="font-medium">{selectedService?.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{t('booking.dateTime')}:</span>
+                  <span className="font-medium">
+                    {selectedSlot ? new Date(selectedSlot.datetime).toLocaleString([], {
+                      dateStyle: 'full',
+                      timeStyle: 'short'
+                    }) : ''}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{t('booking.duration')}:</span>
+                  <span className="font-medium">{selectedService?.duration_minutes} {t('booking.minutes')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{t('booking.price')}:</span>
+                  <span className="font-medium">${selectedService?.price.toFixed(2)}</span>
+                </div>
+                {selectedStaff && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">{t('booking.staff')}:</span>
+                    <span className="font-medium">{selectedStaff.name}</span>
+                  </div>
+                )}
               </div>
-              {/* Add Message Textarea */}
-              <div>
-                {/* Use translation key */}
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700">{t('booking.messageLabel')}</label>
-                <textarea
+            </div>
+
+            <form onSubmit={handleBookingSubmit} className="space-y-6">
+              {/* Contact Information */}
+              <div className="bg-white p-4 rounded-lg border border-gray-200">
+                <h3 className="text-lg font-medium mb-4">{t('booking.contactInformation')}</h3>
+                
+                <div className="space-y-4">
+                  {/* Client Email (read-only) */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      {t('booking.emailLabel')}
+                    </label>
+                    <input
+                      type="email"
+                      value={user?.email || ''}
+                      disabled
+                      className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-500"
+                    />
+                  </div>
+
+                  {/* Phone Number Field */}
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                      {t('booking.phoneLabel')} <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={clientPhone || user?.user_metadata?.phone || ''}
+                      onChange={(e) => setClientPhone(e.target.value)}
+                      required
+                      placeholder={t('booking.phonePlaceholder')}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-[#D4AF37] focus:ring focus:ring-[#D4AF37] focus:ring-opacity-50"
+                    />
+                    {!clientPhone && (
+                      <p className="mt-1 text-sm text-red-600">{t('booking.phoneError')}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Information */}
+              <div className="bg-white p-4 rounded-lg border border-gray-200">
+                <h3 className="text-lg font-medium mb-4">{t('booking.additionalInformation')}</h3>
+                
+                <div>
+                  <label htmlFor="message" className="block text-sm font-medium text-gray-700">
+                    {t('booking.messageLabel')} <span className="text-gray-500">({t('booking.optional')})</span>
+                  </label>
+                  <textarea
                     id="message"
                     name="message"
                     rows={4}
                     value={clientMessage}
                     onChange={(e) => setClientMessage(e.target.value)}
-                    required // Make message required
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-[#D4AF37] focus:ring focus:ring-[#D4AF37] focus:ring-opacity-50" // Update focus style
-                    // Use translation key for placeholder
+                    maxLength={250}
                     placeholder={t('booking.messagePlaceholder')}
-                />
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-[#D4AF37] focus:ring focus:ring-[#D4AF37] focus:ring-opacity-50"
+                  />
+                  <p className="mt-1 text-sm text-gray-500">
+                    {t('booking.characterLimit', { count: 250 - clientMessage.length })}
+                  </p>
+                </div>
               </div>
-              {/* Use translation keys for button text */}
-              <button type="submit" disabled={loading} className="w-full bg-[#D4AF37] hover:bg-[#B4941F] text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out disabled:opacity-50"> {/* Update button color */}
-                {loading ? t('booking.bookingButtonLoading') : t('booking.confirmButton')}
+
+              {/* Terms and Conditions */}
+              <div className="bg-white p-4 rounded-lg border border-gray-200">
+                <div className="text-sm text-gray-600">
+                  <p>{t('booking.termsNotice')}</p>
+                  <p className="mt-2">{t('booking.cancellationPolicy')}</p>
+                </div>
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded">
+                  {error}
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading || !clientPhone}
+                className="w-full bg-[#D4AF37] hover:bg-[#B4941F] text-white font-bold py-3 px-4 rounded transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {t('booking.bookingButtonLoading')}
+                  </span>
+                ) : (
+                  t('booking.confirmButton')
+                )}
               </button>
             </form>
           </div>
         );
-      // Step 3 is now Confirmation
-      case 3:
-        // Auth check is now handled by useLayoutEffect above
-        // Although checked earlier, add explicit check for user to satisfy TS
-        if (!user) return null; // Should not happen due to useLayoutEffect, but satisfies TS
-
+      case 3: // Step 3: Confirmation
         return (
-          <div className="text-center p-10">
-            {/* Use translation key */}
-            <h2 className="text-2xl font-semibold mb-4 text-green-600">{t('booking.confirmationTitle')}</h2>
-            {/* Use user email or fetched name */}
-            {/* Use translation key with interpolation */}
-            <p>{t('booking.confirmationGreeting', { name: user.user_metadata?.full_name || user.email })}</p>
-            {/* Removed service name */}
-            {/* Use translation keys for structure */}
-            <p>{t('booking.confirmationMessagePrefix')} <strong>{selectedSlot ? new Date(selectedSlot.datetime).toLocaleString() : ''}</strong>{t('booking.confirmationMessageSuffix')}</p>
-            {/* Use translation key */}
-            <p className="mt-2">{t('booking.reviewMessagePrompt')}</p>
-            <p className="mt-1 p-2 bg-gray-100 rounded text-sm text-left italic">"{clientMessage}"</p>
-            {/* Use translation key */}
-            <p className="mt-4">{t('booking.confirmationEmailNotice')}</p>
-            {/* Reset state including message */}
-            {/* Use translation key */}
-            <button onClick={() => { setStep(1); setSelectedSlot(null); setClientPhone(''); setClientMessage(''); setSelectedDate(new Date()); }} className="mt-6 bg-[#D4AF37] hover:bg-[#B4941F] text-white font-bold py-2 px-4 rounded"> {/* Update button color */}
-              {t('booking.bookAnotherButton')}
-            </button>
+          <div className="max-w-2xl mx-auto">
+            <div className="text-center">
+              <div className="mb-8">
+                <svg className="mx-auto h-16 w-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 48 48">
+                  <circle className="opacity-25" cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M14 24l8 8 16-16"/>
+                </svg>
+                <h2 className="mt-4 text-3xl font-semibold text-green-600">{t('booking.confirmationTitle')}</h2>
+                <p className="mt-2 text-lg text-gray-600">
+                  {t('booking.confirmationGreeting', { name: user?.user_metadata?.full_name || user?.email || '' })}
+                </p>
+              </div>
+
+              {/* Booking Details Card */}
+              <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm mb-8">
+                <h3 className="text-xl font-medium mb-4">{t('booking.bookingDetails')}</h3>
+                <div className="space-y-3 text-left">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">{t('booking.service')}</p>
+                      <p className="font-medium">{selectedService?.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">{t('booking.price')}</p>
+                      <p className="font-medium">${selectedService?.price.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">{t('booking.dateTime')}</p>
+                      <p className="font-medium">
+                        {selectedSlot ? new Date(selectedSlot.datetime).toLocaleString([], {
+                          dateStyle: 'full',
+                          timeStyle: 'short'
+                        }) : ''}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">{t('booking.duration')}</p>
+                      <p className="font-medium">{selectedService?.duration_minutes} {t('booking.minutes')}</p>
+                    </div>
+                    {selectedStaff && (
+                      <div>
+                        <p className="text-sm text-gray-600">{t('booking.staff')}</p>
+                        <p className="font-medium">{selectedStaff.name}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {clientMessage && (
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-600">{t('booking.yourMessage')}</p>
+                      <p className="mt-1 p-3 bg-gray-50 rounded-md text-sm italic">"{clientMessage}"</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
+                <Link
+                  to="/my-bookings"
+                  className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-[#D4AF37] hover:bg-[#B4941F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D4AF37]"
+                >
+                  {t('booking.viewMyBookings')}
+                </Link>
+                <button
+                  onClick={() => {
+                    setStep(0);
+                    setSelectedService(null);
+                    setSelectedSlot(null);
+                    setClientPhone('');
+                    setClientMessage('');
+                    setSelectedDate(new Date());
+                  }}
+                  className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 rounded-md shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D4AF37]"
+                >
+                  {t('booking.bookAnotherButton')}
+                </button>
+              </div>
+
+              {/* Contact Support */}
+              <p className="mt-8 text-sm text-gray-600">
+                {t('booking.needHelp')}{' '}
+                <Link to="/contact" className="text-[#D4AF37] hover:underline">
+                  {t('booking.contactSupport')}
+                </Link>
+              </p>
+            </div>
           </div>
         );
       default:
-        // Use translation key
         return <div>{t('booking.invalidStep')}</div>;
     }
   };
 
   return (
-    <div className="bg-gray-50"> {/* Apply background */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12"> {/* Standardize container */}
-        {/* Use translation key */}
-        <h1 className="text-4xl font-serif text-center mb-12">{t('booking.pageTitle')}</h1> {/* Update title style */}
+    <div className="bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h1 className="text-4xl font-serif text-center mb-12">{t('booking.pageTitle')}</h1>
         {renderStepContent()}
-
-        {/* Login/Register Modal */}
-      </div> {/* Close the max-w-7xl container HERE */}
+      </div>
       <Modal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
-        title={t('booking.authModal.title')} // Use translation key
+        title={t('booking.authModal.title')}
       >
         <div className="text-center">
-          <p className="mb-4">{t('booking.authModal.message')}</p> {/* Use translation key */}
+          <p className="mb-4">{t('booking.authModal.message')}</p>
           <div className="flex justify-center space-x-4">
             <Link
-              to={`/login?redirect=${location.pathname}${location.search}`} // Redirect back after login
-              className="px-4 py-2 bg-[#D4AF37] text-white rounded hover:bg-[#B4941F]" // Update button color
-              onClick={() => setShowAuthModal(false)} // Close modal on click
+              to={`/login?redirect=${location.pathname}${location.search}`}
+              className="px-4 py-2 bg-[#D4AF37] text-white rounded hover:bg-[#B4941F]"
+              onClick={() => setShowAuthModal(false)}
             >
-              {t('navigation.login')} {/* Use translation key */}
+              {t('navigation.login')}
             </Link>
             <Link
-              to={`/register?redirect=${location.pathname}${location.search}`} // Redirect back after register
-              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700" // Keep register distinct, maybe gray?
-              onClick={() => setShowAuthModal(false)} // Close modal on click
+              to={`/register?redirect=${location.pathname}${location.search}`}
+              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+              onClick={() => setShowAuthModal(false)}
             >
-              {t('navigation.register')} {/* Use translation key */}
+              {t('navigation.register')}
             </Link>
           </div>
         </div>
       </Modal>
-    </div> // This closes the outer bg-gray-50 div
+    </div>
   );
 };
 
-// Export the component
-export { BookingPortal }; // Use named export
+export { BookingPortal };

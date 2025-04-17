@@ -96,7 +96,38 @@ export const translations = {
       authModal: {
         title: 'Login Required',
         message: 'You need to be logged in or registered to book an appointment.'
-      }
+      },
+      selectServiceTitle: 'Select Service',
+      bookingSummary: 'Booking Summary',
+      service: 'Service',
+      dateTime: 'Date & Time',
+      minutes: 'minutes',
+      contactInformation: 'Contact Information',
+      emailLabel: 'Email',
+      phonePlaceholder: 'Enter your phone number',
+      phoneError: 'Phone number is required',
+      additionalInformation: 'Additional Information',
+      optional: 'optional',
+      characterLimit: '{{count}} characters remaining',
+      termsNotice: 'By booking an appointment, you agree to our terms of service.',
+      cancellationPolicy: 'Please note that cancellations must be made at least 24 hours before your appointment.',
+      bookingDetails: 'Booking Details',
+      yourMessage: 'Your Message',
+      nextSteps: 'Next Steps',
+      addToCalendarPrompt: 'Add this appointment to your calendar.',
+      reminderNotice: "We'll send you a reminder 24 hours before your appointment.",
+      needHelp: 'Need help?',
+      contactSupport: 'Contact Support',
+      selectStaffLabel: 'Select Staff (Optional)',
+      anyStaff: 'Any Available Staff',
+      errorLoadServices: 'Could not load services. Please try again later.',
+      errorLoadStaff: 'Could not load staff members. Please try again later.',
+      price: 'Price',
+      duration: 'Duration',
+      viewMyBookings: 'View My Bookings',
+      backToServiceSelection: 'Back to Service Selection',
+      noStaffAvailable: 'No staff members are currently available for this service.',
+
     },
     auth: { // Added auth section for Login/Register
       register: {
@@ -185,7 +216,8 @@ export const translations = {
         sunday: 'Sunday'
       },
       step_progress: 'Step {{current}} of {{total}}', // Added for multi-step forms
-      or: 'OR' // Added for image upload section
+      or: 'OR', // Added for image upload section
+      refresh: 'Refresh'
     },
     admin: { // Added admin section
       bookings: {
@@ -282,62 +314,62 @@ export const translations = {
           category: 'Category',
           sale_price: 'Sale Price',
           quantity: 'Quantity',
-            reorder_level: 'Reorder Level',
-            currency: 'Currency', // Added
-            original_price: 'Original Price', // Added
-            discount: 'Discount (%)', // Added
-            final_price: 'Final Sale Price:', // Added
-            image_section_title: 'Product Image', // Added
-            upload_image: 'Upload New Image', // Added
-            upload_hint: 'Overrides the URL below if selected.', // Added
-            image_url: 'Image URL' // Added
-          },
-          placeholders: { // Added placeholders subsection if missing, or add keys
-            original_price: 'e.g., 19.99', // Added
-            image_url: 'https://example.com/image.jpg' // Added
-          },
-          hints: { // Added hints subsection
-            original_price: 'Regular price before discount. Leave blank if not on sale.'
-          },
-          alt: { // Added alt subsection
-            preview: 'Preview'
-          },
-          buttons: {
-            add: 'Add Product',
-            update: 'Update Product',
-            remove_image: 'Remove Image' // Added
-          },
-          notifications: {
-            add_success: 'Product "{{name}}" added successfully!',
-            update_success: 'Product "{{name}}" updated successfully!',
-            delete_success: 'Product "{{name}}" deleted successfully!',
-            uploading_image: 'Uploading image...', // Added
-            image_removed_preview: 'Image preview cleared.', // Added
-            old_image_deleted: 'Old image deleted successfully.', // Added
-            upload_reverted: 'Image upload reverted due to save failure.' // Added
-          },
-          errors: {
-            load: 'Failed to load products.',
-            delete: 'Failed to delete product "{{name}}".',
-            invalid_id: 'Cannot delete product: Invalid ID.',
-            required_fields: 'Please fill in required fields (Name, Sale Price >= 0, Quantity >= 0).', // Keep existing or update if needed
-            add: 'Failed to add product.',
-            update: 'Failed to update product.',
-            required_name: 'Product name is required.', // Added
-            invalid_quantity: 'Quantity must be 0 or greater.', // Added
-            invalid_discount: 'Discount percentage must be between 0 and 100.', // Added
-            required_fields_final: 'Please ensure Name and Quantity are valid before saving.', // Added
-            upload: 'Image upload failed.', // Added
-            delete_old_image: 'Failed to delete the old image.', // Added
-            revert_upload: 'Failed to delete the newly uploaded image after product save failed.' // Added
-          },
-          steps: { // Added steps subsection
-            basic_info: 'Step 1: Basic Information',
-            pricing_stock: 'Step 2: Pricing & Stock',
-            image: 'Step 3: Product Image'
-          }
+          reorder_level: 'Reorder Level',
+          currency: 'Currency', // Added
+          original_price: 'Original Price', // Added
+          discount: 'Discount (%)', // Added
+          final_price: 'Final Sale Price:', // Added
+          image_section_title: 'Product Image', // Added
+          upload_image: 'Upload New Image', // Added
+          upload_hint: 'Overrides the URL below if selected.', // Added
+          image_url: 'Image URL' // Added
         },
-        services: { // Added services section
+        placeholders: { // Added placeholders subsection if missing, or add keys
+          original_price: 'e.g., 19.99', // Added
+          image_url: 'https://example.com/image.jpg' // Added
+        },
+        hints: { // Added hints subsection
+          original_price: 'Regular price before discount. Leave blank if not on sale.'
+        },
+        alt: { // Added alt subsection
+          preview: 'Preview'
+        },
+        buttons: {
+          add: 'Add Product',
+          update: 'Update Product',
+          remove_image: 'Remove Image' // Added
+        },
+        notifications: {
+          add_success: 'Product "{{name}}" added successfully!',
+          update_success: 'Product "{{name}}" updated successfully!',
+          delete_success: 'Product "{{name}}" deleted successfully!',
+          uploading_image: 'Uploading image...', // Added
+          image_removed_preview: 'Image preview cleared.', // Added
+          old_image_deleted: 'Old image deleted successfully.', // Added
+          upload_reverted: 'Image upload reverted due to save failure.' // Added
+        },
+        errors: {
+          load: 'Failed to load products.',
+          delete: 'Failed to delete product "{{name}}".',
+          invalid_id: 'Cannot delete product: Invalid ID.',
+          required_fields: 'Please fill in required fields (Name, Sale Price >= 0, Quantity >= 0).', // Keep existing or update if needed
+          add: 'Failed to add product.',
+          update: 'Failed to update product.',
+          required_name: 'Product name is required.', // Added
+          invalid_quantity: 'Quantity must be 0 or greater.', // Added
+          invalid_discount: 'Discount percentage must be between 0 and 100.', // Added
+          required_fields_final: 'Please ensure Name and Quantity are valid before saving.', // Added
+          upload: 'Image upload failed.', // Added
+          delete_old_image: 'Failed to delete the old image.', // Added
+          revert_upload: 'Failed to delete the newly uploaded image after product save failed.' // Added
+        },
+        steps: { // Added steps subsection
+          basic_info: 'Step 1: Basic Information',
+          pricing_stock: 'Step 2: Pricing & Stock',
+          image: 'Step 3: Product Image'
+        }
+      },
+      services: { // Added services section
         title: 'Manage Services',
         add_button: 'Add Service',
         search_placeholder: 'Search services...',
@@ -414,7 +446,8 @@ export const translations = {
         status: { // Message statuses
           unread: 'Unread',
           read: 'Read',
-          archived: 'Archived'
+          archive: 'Archived'
+
         },
         actions: {
           mark_read: 'Mark Read',
@@ -424,13 +457,17 @@ export const translations = {
         },
         notifications: {
           status_updated: 'Message status updated to {{status}}.',
-          deleted: 'Message deleted successfully.' // Added
+          deleted: 'Message deleted successfully.', // Added
+          bulk_updated: 'Selected messages have been updated successfully.'
         },
         errors: {
           fetch: 'Failed to fetch messages.',
           update_status: 'Failed to update message status.',
-          delete: 'Failed to delete message.' // Added
-        }
+          delete: 'Failed to delete message.', // Added
+          bulk_action: 'Failed to perform bulk action on messages.'
+        },
+        confirm_bulk_delete: 'Are you sure you want to delete the selected messages?',
+        updating: 'Updating messages...'
       },
       settings: { // Added settings section
         title: 'Salon Settings',
@@ -701,7 +738,37 @@ export const translations = {
       authModal: {
         title: 'تسجيل الدخول مطلوب',
         message: 'تحتاج إلى تسجيل الدخول أو التسجيل لحجز موعد.'
-      }
+      },
+      selectServiceTitle: 'اختر الخدمة',
+      bookingSummary: 'ملخص الحجز',
+      service: 'الخدمة',
+      dateTime: 'التاريخ والوقت',
+      minutes: 'دقائق',
+      contactInformation: 'معلومات الاتصال',
+      emailLabel: 'البريد الإلكتروني',
+      phonePlaceholder: 'أدخل رقم هاتفك',
+      phoneError: 'رقم الهاتف مطلوب',
+      additionalInformation: 'معلومات إضافية',
+      optional: 'اختياري',
+      characterLimit: 'متبقي {{count}} حرف',
+      termsNotice: 'بحجز موعد، أنت توافق على شروط الخدمة الخاصة بنا.',
+      cancellationPolicy: 'يرجى ملاحظة أن الإلغاء يجب أن يتم قبل 24 ساعة على الأقل من موعدك.',
+      bookingDetails: 'تفاصيل الحجز',
+      yourMessage: 'رسالتك',
+      nextSteps: 'الخطوات التالية',
+      addToCalendarPrompt: 'أضف هذا الموعد إلى تقويمك.',
+      reminderNotice: 'سنرسل لك تذكيراً قبل 24 ساعة من موعدك.',
+      needHelp: 'تحتاج مساعدة؟',
+      contactSupport: 'اتصل بالدعم',
+      selectStaffLabel: 'اختر الموظف (اختياري)',
+      anyStaff: 'أي موظف متاح',
+      errorLoadServices: 'تعذر تحميل الخدمات. يرجى المحاولة مرة أخرى لاحقاً.',
+      errorLoadStaff: 'تعذر تحميل قائمة الموظفين. يرجى المحاولة مرة أخرى لاحقاً.',
+      price: 'السعر',
+      duration: 'المدة',
+      viewMyBookings: 'عرض حجوزاتي',
+      backToServiceSelection: 'الرجوع إلى اختيار الخدمة',
+      noStaffAvailable: 'لا يوجد حالياً موظفون متاحون لهذه الخدمة.',
     },
     auth: { // Added auth section for Login/Register (Arabic)
       register: {
@@ -788,7 +855,10 @@ export const translations = {
         friday: 'الجمعة',
         saturday: 'السبت',
         sunday: 'الأحد'
-      }
+      },
+      step_progress: 'الخطوة {{current}} من {{total}}', // Added for multi-step forms
+      or: 'أو', // Added for image upload section
+      refresh: 'تحديث'
     },
     admin: { // Added admin section
       bookings: {
@@ -885,18 +955,60 @@ export const translations = {
           category: 'الفئة',
           sale_price: 'سعر البيع',
           quantity: 'الكمية',
-          reorder_level: 'مستوى إعادة الطلب'
+          reorder_level: 'مستوى إعادة الطلب',
+          currency: 'العملة', // Added
+          original_price: 'السعر الأصلي', // Added
+          discount: 'الخصم (%)', // Added
+          final_price: 'السعر النهائي:', // Added
+          image_section_title: 'صورة المنتج', // Added
+          upload_image: 'رفع صورة جديدة', // Added
+          upload_hint: 'سيحل محل الرابط أدناه إذا تم تحديده.', // Added
+          image_url: 'رابط الصورة' // Added
+        },
+        placeholders: {
+          original_price: 'مثال: 19.99', // Added
+          image_url: 'https://example.com/image.jpg' // Added
+        },
+        hints: {
+          original_price: 'السعر العادي قبل الخصم. اتركه فارغاً إذا لم يكن في تخفيض.'
+        },
+        alt: {
+          preview: 'معاينة'
+        },
+        buttons: {
+          add: 'إضافة منتج',
+          update: 'تحديث المنتج',
+          remove_image: 'إزالة الصورة' // Added
         },
         notifications: {
           // Add/Update success handled in form component? If not, add here.
           // add_success: 'تمت إضافة المنتج بنجاح!',
           // update_success: 'تم تحديث المنتج بنجاح!',
-          delete_success: 'تم حذف المنتج "{{name}}" بنجاح!'
+          delete_success: 'تم حذف المنتج "{{name}}" بنجاح!',
+          uploading_image: 'جارٍ رفع الصورة...', // Added
+          image_removed_preview: 'تم مسح معاينة الصورة.', // Added
+          old_image_deleted: 'تم حذف الصورة القديمة بنجاح.', // Added
+          upload_reverted: 'تم التراجع عن رفع الصورة بسبب فشل الحفظ' // Added
         },
         errors: {
           load: 'فشل في تحميل المنتجات.',
           delete: 'فشل في حذف المنتج "{{name}}".',
-          invalid_id: 'لا يمكن حذف المنتج: معرف غير صالح.'
+          invalid_id: 'لا يمكن حذف المنتج: معرف غير صالح.',
+          required_fields: 'يرجى ملء الحقول المطلوبة (الاسم، سعر البيع >= 0، الكمية >= 0).',
+          add: 'فشل في إضافة المنتج.',
+          update: 'فشل في تحديث المنتج.',
+          required_name: 'اسم المنتج مطلوب.', // Added
+          invalid_quantity: 'يجب أن تكون الكمية 0 أو أكثر.', // Added
+          invalid_discount: 'يجب أن تكون نسبة الخصم بين 0 و 100.', // Added
+          required_fields_final: 'يرجى التأكد من صحة الاسم والكمية قبل الحفظ.', // Added
+          upload: 'فشل رفع الصورة.', // Added
+          delete_old_image: 'فشل حذف الصورة القديمة.', // Added
+          revert_upload: 'فشل حذف الصورة المرفوعة حديثاً بعد فشل حفظ المنتج' // Added
+        },
+        steps: {
+          basic_info: 'الخطوة 1: المعلومات الأساسية',
+          pricing_stock: 'الخطوة 2: التسعير والمخزون',
+          image: 'الخطوة 3: صورة المنتج'
         }
       },
       services: { // Added services section
@@ -976,7 +1088,7 @@ export const translations = {
         status: { // Message statuses
           unread: 'غير مقروءة',
           read: 'مقروءة',
-          archived: 'مؤرشفة'
+          archive: 'مؤرشفة'
         },
         actions: {
           mark_read: 'وضع علامة كمقروءة',
@@ -986,13 +1098,17 @@ export const translations = {
         },
         notifications: {
           status_updated: 'تم تحديث حالة الرسالة إلى {{status}}.',
-          deleted: 'تم حذف الرسالة بنجاح.' // Added
+          deleted: 'تم حذف الرسالة بنجاح.', // Added
+          bulk_updated: 'تم تحديث الرسائل المحددة بنجاح.'
         },
         errors: {
           fetch: 'فشل في جلب الرسائل.',
           update_status: 'فشل في تحديث حالة الرسالة.',
-          delete: 'فشل حذف الرسالة.' // Added
-        }
+          delete: 'فشل حذف الرسالة.', // Added
+          bulk_action: 'فشل في تنفيذ الإجراء الجماعي على الرسائل.'
+        },
+        confirm_bulk_delete: 'هل أنت متأكد أنك تريد حذف الرسائل المحددة؟',
+        updating: 'جارٍ تحديث الرسائل...'
       },
       settings: { // Added settings section
         title: 'إعدادات الصالون',

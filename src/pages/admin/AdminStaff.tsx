@@ -1,33 +1,38 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
- import { fetchStaff, deleteStaff, Staff } from '../../lib/staffApi';
- // TODO: Import AddEditStaffForm modal component
- import AddEditStaffForm from '../../components/admin/AddEditStaffForm';
- import Modal from '../../components/Modal'; // Assuming Modal component exists
+import { fetchStaffWithServices, deleteStaff, StaffWithServices } from '../../lib/staffApi';
+import { Service, fetchServices } from '../../lib/serviceApi';
+import AddEditStaffForm from '../../components/admin/AddEditStaffForm';
+import Modal from '../../components/Modal';
 
- const AdminStaff: React.FC = () => {
+const AdminStaff: React.FC = () => {
   const { t } = useTranslation();
-  const [staffList, setStaffList] = useState<Staff[]>([]);
+  const [staffList, setStaffList] = useState<StaffWithServices[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
+  const [selectedStaff, setSelectedStaff] = useState<StaffWithServices | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
-  const [staffToDelete, setStaffToDelete] = useState<Staff | null>(null);
+  const [staffToDelete, setStaffToDelete] = useState<StaffWithServices | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage] = useState<number>(10);
 
-  // Load staff using actual API call
-  const loadStaff = useCallback(async () => {
+  // Load staff and services
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchStaff();
-      setStaffList(data);
+      const [staffData, servicesData] = await Promise.all([
+        fetchStaffWithServices(),
+        fetchServices()
+      ]);
+      setStaffList(staffData);
+      setServices(servicesData);
     } catch (err) {
-      const message = t('admin.staff.errors.load', 'Failed to load staff members.'); // TODO: Add translation key
+      const message = t('admin.staff.errors.load', 'Failed to load staff members.');
       setError(message);
       toast.error(message);
       console.error(err);
@@ -37,20 +42,20 @@ import { toast } from 'react-hot-toast';
   }, [t]);
 
   useEffect(() => {
-    loadStaff();
-  }, [loadStaff]);
+    loadData();
+  }, [loadData]);
 
   const handleAddStaff = () => {
     setSelectedStaff(null);
     setIsModalOpen(true);
   };
 
-  const handleEditStaff = (staff: Staff) => {
+  const handleEditStaff = (staff: StaffWithServices) => {
     setSelectedStaff(staff);
     setIsModalOpen(true);
   };
 
-  const openDeleteConfirm = (staff: Staff) => {
+  const openDeleteConfirm = (staff: StaffWithServices) => {
     setStaffToDelete(staff);
     setIsDeleteModalOpen(true);
   };
@@ -60,10 +65,9 @@ import { toast } from 'react-hot-toast';
     setIsDeleteModalOpen(false);
   };
 
-  // Handle deleting a staff member using actual API call
   const handleDeleteStaff = async () => {
     if (!staffToDelete || typeof staffToDelete.id === 'undefined') {
-      toast.error(t('admin.staff.errors.invalid_id', 'Invalid staff member selected for deletion.')); // TODO: Add translation key
+      toast.error(t('admin.staff.errors.invalid_id', 'Invalid staff member selected for deletion.'));
       return;
     }
     const staffId = staffToDelete.id;
@@ -71,36 +75,31 @@ import { toast } from 'react-hot-toast';
     try {
       await deleteStaff(staffId);
       setStaffList(staffList.filter(s => s.id !== staffId));
-      toast.success(t('admin.staff.notifications.delete_success', `Staff member "${staffName}" deleted successfully.`, { name: staffName })); // TODO: Add translation key
+      toast.success(t('admin.staff.notifications.delete_success', `Staff member "${staffName}" deleted successfully.`, { name: staffName }));
       closeDeleteConfirm();
     } catch (err) {
-      // Consider specific error for foreign key constraints if delete fails
-      const message = t('admin.staff.errors.delete', `Failed to delete staff member "${staffName}". They might be assigned to bookings.`, { name: staffName }); // TODO: Add translation key
+      const message = t('admin.staff.errors.delete', `Failed to delete staff member "${staffName}". They might be assigned to bookings.`, { name: staffName });
       toast.error(message);
       console.error(err);
       closeDeleteConfirm();
     }
   };
 
-  // Handle successful form submission (add/edit)
   const handleFormSuccess = () => {
     setIsModalOpen(false);
     setSelectedStaff(null);
-    loadStaff(); // Re-fetch after add/edit
-    // Success toast likely handled within the form component
+    loadData();
   };
 
   if (loading) return <div className="p-6">{t('common.loading')}</div>;
   if (error) return <div className="p-6 text-red-600">{error}</div>;
 
-  // Filter staff based on search term (client-side)
   const filteredStaff = staffList.filter(staff =>
     staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (staff.phone && staff.phone.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (staff.bio && staff.bio.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  // Pagination Logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentStaff = filteredStaff.slice(indexOfFirstItem, indexOfLastItem);
@@ -110,14 +109,22 @@ import { toast } from 'react-hot-toast';
     setCurrentPage(pageNumber);
   };
 
+  // Helper function to get service names from IDs
+  const getServiceNames = (serviceIds: number[] = []): string => {
+    return serviceIds
+      .map(id => services.find(s => s.id === id)?.name)
+      .filter(Boolean)
+      .join(', ');
+  };
+
   return (
     <div className="p-6">
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        <h1 className="text-3xl font-semibold text-gray-800">{t('admin.staff.title', 'Manage Staff')}</h1> {/* TODO: Add translation key */}
+        <h1 className="text-3xl font-semibold text-gray-800">{t('admin.staff.title', 'Manage Staff')}</h1>
         <div className="flex items-center gap-4">
            <input
             type="text"
-            placeholder={t('admin.staff.search_placeholder', 'Search staff...')} // TODO: Add translation key
+            placeholder={t('admin.staff.search_placeholder', 'Search staff...')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -126,7 +133,7 @@ import { toast } from 'react-hot-toast';
             onClick={handleAddStaff}
             className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out whitespace-nowrap"
           >
-            {t('admin.staff.add_button', 'Add Staff Member')} {/* TODO: Add translation key */}
+            {t('admin.staff.add_button', 'Add Staff Member')}
           </button>
         </div>
       </div>
@@ -135,9 +142,9 @@ import { toast } from 'react-hot-toast';
         <table className="min-w-full leading-normal">
           <thead>
             <tr className="bg-gray-100 text-left text-gray-600 uppercase text-sm">
-              {/* TODO: Add translation keys */}
               <th className="px-5 py-3 border-b-2 border-gray-200">{t('admin.staff.table.name', 'Name')}</th>
               <th className="px-5 py-3 border-b-2 border-gray-200">{t('admin.staff.table.phone', 'Phone')}</th>
+              <th className="px-5 py-3 border-b-2 border-gray-200">{t('admin.staff.table.services', 'Services')}</th>
               <th className="px-5 py-3 border-b-2 border-gray-200 text-center">{t('admin.staff.table.active', 'Active')}</th>
               <th className="px-5 py-3 border-b-2 border-gray-200">{t('common.actions')}</th>
             </tr>
@@ -145,8 +152,7 @@ import { toast } from 'react-hot-toast';
           <tbody>
             {filteredStaff.length === 0 ? (
               <tr>
-                <td colSpan={4} className="text-center py-10 text-gray-500">
-                  {/* TODO: Add translation keys */}
+                <td colSpan={5} className="text-center py-10 text-gray-500">
                   {searchTerm ? t('admin.staff.no_search_results', 'No staff members match your search.') : t('admin.staff.no_staff', 'No staff members found.')}
                 </td>
               </tr>
@@ -155,6 +161,9 @@ import { toast } from 'react-hot-toast';
                 <tr key={staffMember.id} className="hover:bg-gray-50">
                   <td className="px-5 py-4 border-b border-gray-200 text-sm">{staffMember.name}</td>
                   <td className="px-5 py-4 border-b border-gray-200 text-sm">{staffMember.phone || t('common.not_applicable')}</td>
+                  <td className="px-5 py-4 border-b border-gray-200 text-sm">
+                    {getServiceNames(staffMember.services) || t('common.not_applicable')}
+                  </td>
                   <td className="px-5 py-4 border-b border-gray-200 text-sm text-center">
                     {staffMember.is_active ? t('common.yes') : t('common.no')}
                   </td>
@@ -202,29 +211,27 @@ import { toast } from 'react-hot-toast';
         </div>
       )}
 
-       {/* Add/Edit Modal Placeholder - Will use AddEditStaffForm */}
+       {/* Add/Edit Modal */}
        <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-         title={t(selectedStaff ? 'admin.staff.edit_modal_title' : 'admin.staff.add_modal_title', selectedStaff ? 'Edit Staff Member' : 'Add Staff Member')} // TODO: Add translation keys
-        >
+        title={t(selectedStaff ? 'admin.staff.edit_modal_title' : 'admin.staff.add_modal_title', selectedStaff ? 'Edit Staff Member' : 'Add Staff Member')}
+       >
          <AddEditStaffForm
            staff={selectedStaff}
            onSuccess={handleFormSuccess}
            onCancel={() => setIsModalOpen(false)}
          />
-         {/* <div className="p-6">Staff Form Placeholder</div> */} {/* Placeholder Removed */}
        </Modal>
 
-        {/* Delete Confirmation Modal */}
+       {/* Delete Confirmation Modal */}
        <Modal
         isOpen={isDeleteModalOpen}
         onClose={closeDeleteConfirm}
-        title={t('admin.staff.delete_modal_title', 'Confirm Deletion')} // TODO: Add translation key
+        title={t('admin.staff.delete_modal_title', 'Confirm Deletion')}
        >
          <div className="p-6">
            <p className="text-sm text-gray-500 mb-6">
-             {/* TODO: Add translation key */}
              {t('admin.staff.confirm_delete', `Are you sure you want to delete ${staffToDelete?.name || 'this staff member'}? This action cannot be undone.`, { name: staffToDelete?.name || 'this staff member' })}
            </p>
            <div className="flex justify-end space-x-3">
